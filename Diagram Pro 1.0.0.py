@@ -175,13 +175,19 @@ def addPlot (graph_axes,kernel,kernel_1,kernel_A,kernel_A_end,kernel_Fmax,kernel
     kp2=A2/(data[Fmax,0]*data[Fmax,1]/1000)
     kp_sum=A_p_end/(data[Fmax,0]*data[Fmax,1]/1000)
     k_a=A2/A_p_end
+    
+    ser=[gran_d,h_ice, h, data[F_max, 0], data[Fmax, 1], k_p, k_w, A_p, A_p_F, A2, A_p_end, kp1, kp2, kp_sum, k_a]
+    if Nag==False:
+        ser+= [D, E, r1]
+    Res_pd=pd.Series(ser)
+    Res_pd.to_excel(filename[0:-4]+'.xlsx', float_format="%.4f", index=False, header=False )
 
     graph_axes.plot(data[:,1],data[:,0])
      #Строим диаграмму разрушения с отметками
     graph_axes.set_xlabel('Прогиб w, миллиметры')
     graph_axes.set_ylabel('Сила F, Ньютоны')
     graph_axes.set_title('Диаграмма разрушения ($\o_{гранул}$ = %g мм, $h_{пром}$ = %g мм)'%(gran_d,h_ice))
-    graph_axes.annotate('max F=%.4g Н, w=%.4g мм' %(data[F_max,0],data[F_max,1]), xy=(data[F_max,1],data[F_max,0]),xytext=(data[F_max,1]-1,data[F_max,0]+.3), size=10)
+    graph_axes.annotate('max F=%.4g Н, w=%.4g мм' %(data[F_max,0],data[Fmax,1]), xy=(data[F_max,1],data[F_max,0]),xytext=(data[F_max,1]-1,data[F_max,0]+.3), size=10)
     graph_axes.scatter(data[Fmax,1],data[Fmax,0],color='orange', s=30, marker='o')
     k_D=k_line(kernel) #Получаем коэффициент прямой упругой зоны
     graph_axes.plot((line(-0.6,k_D,0),line(data[Fmax,0]-(data[Fmax,0]/3),k_D,0)),(-0.6,data[Fmax,0]-(data[Fmax,0]/3)), linestyle = '--', linewidth=1, color = 'darkmagenta') #Строим прямую упругой части графика
@@ -226,6 +232,8 @@ def interact_point(graph_axes,kernel,kernel_1,kernel_A,kernel_A_end,kernel_Fmax,
     graph_axes.scatter(data[kernel_L,1],data[kernel_L,0],color='orange', s=30, marker='o')
 
     plt.draw()
+    
+    
 if __name__=='__main__':
     def onButtonClicked(event):
         #Обработчик событий нажатия на кнопку
@@ -234,7 +242,7 @@ if __name__=='__main__':
         graph_axes = fig.add_subplot(111)
         graph_axes.grid()
         addPlot(graph_axes,kernel_S.val,kernel_1_S.val,kernel_A_S.val,kernel_A_end.val,kernel_Fmax.val,kernel_L.val)
-        #Res_pd=pd.Series([],[])
+        
         np.savetxt(filename[0:-4]+'_new.txt',data)#сохранение файла в то же место но с новым именем для будущих нужд
 
     def Change_slider(value):
