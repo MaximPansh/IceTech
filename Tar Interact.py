@@ -27,6 +27,7 @@ def open_datafile(path,a=1,b=20000000):
     data=np.array(data.values)    #перевод значений в массив Numpy
     return data[a:(b+1)]
 
+
 def tar_F(V, null_point=0, k=-106.897):
     """
     Преобразование показаний датчика силы (Вольты в Ньютоны)
@@ -42,6 +43,7 @@ def tar_F(V, null_point=0, k=-106.897):
     
     return np.array(k*V+b)#тарировочное уравнение
            
+
 def tar_w(V, k=-2.646, null_point=0):
     """
     Преобразование показаний датчика перемещений (Вольты в миллиметры)
@@ -54,6 +56,7 @@ def tar_w(V, k=-2.646, null_point=0):
     b=-k*V[null_point]  
     return np.array(k*V+b) #Тарировочное уравнение
 
+
 def dig_noise(data,kernel_size=51):
     """
     Устранение "цифрового шума" с помощью медианного фильтра
@@ -62,11 +65,13 @@ def dig_noise(data,kernel_size=51):
     """
     return sp.signal.medfilt(data, kernel_size)
 
+
 def butter_lowpass(normal_cutoff, order=5):
     """
     Настройка фильтра Баттерворта
     """
     return sp.signal.butter(order, normal_cutoff, btype='low', analog=False)
+
 
 def butter_lowpass_filtfilt(data, normal_cutoff, order=5):
     """
@@ -77,30 +82,23 @@ def butter_lowpass_filtfilt(data, normal_cutoff, order=5):
     b, a = butter_lowpass(normal_cutoff, order=order)
     return sp.signal.filtfilt(b, a, data)
 
+
 def calculate_tar (l,r,bat,med,f_p):
     l=int(l)
     r=int(r)
     bat=float(bat)
     med=round(int(med),0)
     f_p=round(int(f_p),0)
-    
+    global F_median, data_filt, data, data_mod, i, data_start, med_old, bat_old, l_old, r_old, filt_old
+
     if med % 2==0:
         med=med+1
-    global F_median
-    global data_filt
-    global data
-    global data_mod
-    global i
-    global data1
-    global med_old
-    global bat_old
-    global filt_old
+
     if i==0:
         med_old=med
         bat_old=bat 
         i=1
 
-        
     data=data1[l:r]
     if i==1 or med_old!=med or bat!=bat_old:
         F_median=dig_noise(data[:,1],med) #Прогоняем показания датчика силы через медианный фильтр
@@ -110,7 +108,8 @@ def calculate_tar (l,r,bat,med,f_p):
             filt_old=np.copy(data_filt)
     else:
         data_mod=np.column_stack((tar_F(data_filt[:,1],null_point=f_p),tar_w(data_filt[:,2],null_point=0))) #Переводим Вольты в Ньютоны и миллиметры
-              
+      
+        
 def plot_F(graph_axes):
     graph_axes.clear()
     graph_axes.grid()
@@ -123,6 +122,7 @@ def plot_F(graph_axes):
     graph_axes.legend(['Нефильтрованные показания','Медианный фильтр','Медианный+Баттерворта фильтры'])
     plt.draw()
     
+    
 def plot_w(graph_axes):
     graph_axes.clear()
     graph_axes.plot(data[:,0],data[:,2])
@@ -134,6 +134,7 @@ def plot_w(graph_axes):
     graph_axes.legend(['Нефильтрованные показания','Фильтр Баттерворта'])
     plt.draw()
 
+
 def plot_F_tar(graph_axes):
     graph_axes.clear()
     graph_axes.plot(data[:,0],data_mod[:,0])
@@ -143,6 +144,7 @@ def plot_F_tar(graph_axes):
     graph_axes.set_ylabel('Сила, Ньютоны')
     plt.draw()
 
+
 def plot_w_tar(graph_axes) :  
     graph_axes.clear()
     graph_axes.plot(data[:,0],data_mod[:,1])
@@ -151,13 +153,7 @@ def plot_w_tar(graph_axes) :
     graph_axes.set_title('Показания датчика перемещения после обработки')
     graph_axes.set_ylabel('Прогиб, миллиметры')
     plt.draw()
-    """
-    graph_axes.plot(data_filt[:,2],data_filt[:,1])
-    graph_axes.grid()
-    graph_axes.set_xlabel('Показания датчика перемещения, Вольты')
-    graph_axes.set_title('Отфильтрованные показания датчиков')
-    graph_axes.set_ylabel('Показания датчика силы, Вольты')
-    """
+
 
 def plot_destract(graph_axes):    
     graph_axes.clear()
@@ -166,37 +162,40 @@ def plot_destract(graph_axes):
     graph_axes.set_xlabel('Прогиб, миллиметры')
     graph_axes.set_ylabel('Сила, Ньютоны')
     graph_axes.set_title('Диаграмма разрушения')
-    
     plt.draw()
+
 
 def onButtonClicked_save(event):
         filename=asksaveasfilename(defaultextension=".txt",filetypes=(("Текстовый файл",".txt"),("All Files","*.*")))
         np.savetxt(fname=filename,X=data_mod) #сохранение обработанных данных диаграммы разрушения     
 
+
 def onButtonClicked_сalc(event):
-    global l_s
-    global r_s
-    global bat_s
-    global med_s
-    global f_p_s
-    global graph_axes
-    calculate_tar(l_s.val,r_s.val,bat_s.val,med_s.val,f_p_s.val) 
+    global l_s, r_s, bat_s, med_s, f_s, graph_axes
+
+    calculate_tar(l_s.val,r_s.val,bat_s.val,med_s.val,f_s.val) 
     plot_F(graph_axes)   
+
 
 def onButtonClicked_per(event):   
     plot_w(graph_axes)
 
+
 def onButtonClicked_F(event):   
     plot_F(graph_axes)
+
 
 def onButtonClicked_Diag(event):
     plot_destract(graph_axes)
 
+
 def onButtonClicked_Ftar(event):
     plot_F_tar(graph_axes)
 
+
 def onButtonClicked_wtar(event):
     plot_w_tar(graph_axes)
+
 
 def interact_point (graph_axes,f_p,l,r):
     f_p=int(f_p)
@@ -211,11 +210,12 @@ def interact_point (graph_axes,f_p,l,r):
     graph_axes.scatter(data_filt[f_p,0],data_filt[f_p,1],color='red', s=30, marker='o') #Точка по которой считали работу разрушения
     graph_axes.scatter(data1[l,0],data1[l,1],color='orange', s=30, marker='o') #Точка по которой строили прямую и считали D и E
     graph_axes.scatter(data1[r,0],data1[r,1],color='orange', s=30, marker='o') #Вторая точка прямой упругой зоны
-    
     plt.draw()
 
+
 def Change_slider(value):
-    interact_point(graph_axes,f_p_s.val,l_s.val,r_s.val)
+    interact_point(graph_axes,f_s.val,l_s.val,r_s.val)
+
 
 def add_figets():
     global fig, graph_axes, data, i
@@ -266,18 +266,18 @@ def add_figets():
     ax_med=plt.axes([0.07,0.2,0.85,0.01])
     ax_f_p=plt.axes([0.07,0.23,0.85,0.01])
     # Вызов слайдеров 
-    global l_s, r_s, bat_s, med_s, f_p_s
+    global l_s, r_s, bat_s, med_s, f_s
 
     l_s=Slider(ax_L,'Левая точка',1,int(len(data[:,0]-100)),valinit=10501,valfmt='%1.0f',)
     r_s=Slider(ax_R,'Правая точка',1,int(len(data[:,0]-100)),valinit=int(len(data[:,0]-10000)),valfmt='%1.0f')
     bat_s=(Slider(ax_bat,' Баттерворт',0.001,0.02,valinit=0.0055,valfmt='%1.3f'))
     med_s=(Slider(ax_med,' Медианный',101,2001,valinit=501,valfmt='%1.0f'))
-    f_p_s=(Slider(ax_f_p,'Ноль Силы',1,int(len(data[:,0]-100)),valinit=1000,valfmt='%1.0f'))
+    f_s=(Slider(ax_f_p,'Ноль Силы',1,int(len(data[:,0]-100)),valinit=1000,valfmt='%1.0f'))
 
 def start():
     global i
     i=0
-    calculate_tar(l_s.val,r_s.val,bat_s.val,med_s.val,f_p_s.val) 
+    calculate_tar(l_s.val,r_s.val,bat_s.val,med_s.val,f_s.val) 
     plot_F(graph_axes)  
 data_file=askopenfilename()  
 data1=open_datafile(data_file)  
@@ -290,7 +290,7 @@ button_add_4.on_clicked(onButtonClicked_Diag)
 button_save.on_clicked(onButtonClicked_save)# вызов функции события при нажатии на кнопку 
 button_Ftar.on_clicked(onButtonClicked_Ftar)# вызов функции события при нажатии на кнопку 
 button_wtar.on_clicked(onButtonClicked_wtar)# вызов функции события при нажатии на кнопку 
-f_p_s.on_changed(Change_slider)
+f_s.on_changed(Change_slider)
 l_s.on_changed(Change_slider)
 r_s.on_changed(Change_slider)
 plt.show()
