@@ -218,65 +218,61 @@ def Change_slider(value):
     interact_point(graph_axes,f_p_s.val,l_s.val,r_s.val)
 
 def add_figets():
-    global fig
-    global graph_axes
-    global data
+    global fig, graph_axes, data, i
 
+    i=0
     data=open_datafile(data_file)
     fig,graph_axes=plt.subplots()
     graph_axes.grid()
     # оставляем снизу графика место под виджеты
-    fig.subplots_adjust(left=0.07,right=0.95, top= 0.97, bottom=0.4)
-    
+    fig.subplots_adjust(left=0.07,right=0.95, top= 0.97, bottom=0.29)
+
         # Создание кнопки "Пересчет"
-    axes_button_add_1=plt.axes([0.05,0.02,0.1,0.075])# координаты
+    axes_button_add_1=plt.axes([0.1,0.02,0.1,0.075])# координаты
     global button_add_1
     button_add_1=Button(axes_button_add_1,'Пересчёт')
-    
+
             # Создание кнопки "Перемещение"
-    axes_button_add_2=plt.axes([0.45,0.02,0.1,0.075])# координаты
+    axes_button_add_2=plt.axes([0.508,0.02,0.1,0.075])# координаты
     global button_add_2
     button_add_2=Button(axes_button_add_2,'Перемещение')
-    
+
             # Создание кнопки "Cила"
-    axes_button_add_3=plt.axes([0.35,0.02,0.1,0.075])# координаты
+    axes_button_add_3=plt.axes([0.406,0.02,0.1,0.075])# координаты
     global button_add_3
     button_add_3=Button(axes_button_add_3,'Сила')
             # Создание кнопки "Диаграмма"
-    axes_button_add_4=plt.axes([0.25,0.02,0.1,0.075])# координаты
+    axes_button_add_4=plt.axes([0.304,0.02,0.1,0.075])# координаты
     global button_add_4
     button_add_4=Button(axes_button_add_4,'Диаграмма')
         # Создание кнопки "Сохранить"
-    axes_button_save=plt.axes([0.15,0.02,0.1,0.075])# координаты
+    axes_button_save=plt.axes([0.202,0.02,0.1,0.075])# координаты
     global button_save
     button_save=Button(axes_button_save,'Cохранить')
-    
-    axes_button_Ftar=plt.axes([0.55,0.02,0.1,0.075])# координаты
+
+    axes_button_Ftar=plt.axes([0.61,0.02,0.1,0.075])# координаты
     global button_Ftar
     button_Ftar=Button(axes_button_Ftar,'Истиная сила')
-    
-    axes_button_wtar=plt.axes([0.65,0.02,0.15,0.075])# координаты
+
+    axes_button_wtar=plt.axes([0.712,0.02,0.15,0.075])# координаты
     global button_wtar
     button_wtar=Button(axes_button_wtar,'Истиное перемещение')
-    
+
     #Создание слайдеров
      # координаты слайдеров
-    ax_L=plt.axes([0.07,0.1,0.55,0.04]) 
-    ax_R=plt.axes([0.07,0.15,0.55,0.04])
-    ax_bat=plt.axes([0.07,0.2,0.55,0.04])
-    ax_med=plt.axes([0.07,0.25,0.55,0.04])
-    ax_f_p=plt.axes([0.07,0.3,0.55,0.04])
+    ax_L=plt.axes([0.07,0.11,0.85,0.01]) 
+    ax_R=plt.axes([0.07,0.14,0.85,0.01])
+    ax_bat=plt.axes([0.07,0.17,0.85,0.01])
+    ax_med=plt.axes([0.07,0.2,0.85,0.01])
+    ax_f_p=plt.axes([0.07,0.23,0.85,0.01])
     # Вызов слайдеров 
-    global l_s
-    global r_s
-    global bat_s
-    global med_s
-    global f_p_s
-    l_s=Slider(ax_L,'L',1,int(len(data1[:,0])),valinit=10501,valfmt='%1.0f')
-    r_s=Slider(ax_R,'R',1,int(len(data1[:,0])),valinit=int(len(data1[:,0])),valfmt='%1.0f')
-    bat_s=(Slider(ax_bat,' Bat',0.001,0.02,valinit=0.0055,valfmt='%1.3f'))
-    med_s=(Slider(ax_med,' Med',101,2001,valinit=501,valfmt='%1.0f'))
-    f_p_s=(Slider(ax_f_p,' F_p',1,int(len(data[:,0]-100)),valinit=1000,valfmt='%1.0f'))
+    global l_s, r_s, bat_s, med_s, f_p_s
+
+    l_s=Slider(ax_L,'Левая точка',1,int(len(data[:,0]-100)),valinit=10501,valfmt='%1.0f',)
+    r_s=Slider(ax_R,'Правая точка',1,int(len(data[:,0]-100)),valinit=int(len(data[:,0]-10000)),valfmt='%1.0f')
+    bat_s=(Slider(ax_bat,' Баттерворт',0.001,0.02,valinit=0.0055,valfmt='%1.3f'))
+    med_s=(Slider(ax_med,' Медианный',101,2001,valinit=501,valfmt='%1.0f'))
+    f_p_s=(Slider(ax_f_p,'Ноль Силы',1,int(len(data[:,0]-100)),valinit=1000,valfmt='%1.0f'))
 
 def start():
     global i
