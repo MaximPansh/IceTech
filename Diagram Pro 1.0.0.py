@@ -83,7 +83,7 @@ def onRadioButtonsClicked(label):
     Обработчик события при клике по типу гранул
     """
     global gran_d
-    value_dic = {'20 мм' : 20,'10 мм' : 10}#словарь со значениями диаметров
+    value_dic = {'20 мм' : 20,'10 мм' : 10, '3 мм' : 3,'Натурный лёд': 0 }#словарь со значениями диаметров
     gran_d=value_dic[label] # вызов значения из словаря label это то что приходит в функцию при клике на кнопку
     #gran_d=value(radiobuttons.value_selected)
 
@@ -140,10 +140,11 @@ def addPlot (graph_axes,kernel,kernel_1,kernel_A,kernel_A_end,kernel_Fmax,kernel
     graph_axes.clear()
     graph_axes.grid()
     plt.draw()   # очистка поля графика
-
     h_ice=round(h_ice_S.val, 1) #Толщина промороженного слоя округление до 1 знака после запятой
-    h=round(onelayer_h(h_ice,gran_d),1) # нахождение приведенной толщины льда и её округление
-
+    if gran_d!=0: 
+        h=round(onelayer_h(h_ice,gran_d),1) # нахождение приведенной толщины льда и её округление
+    else:
+        h=h_ice
     kernel=int(kernel)
     kernel_1=int(kernel_1)
     kernel_A=int(kernel_A)
@@ -170,10 +171,9 @@ def addPlot (graph_axes,kernel,kernel_1,kernel_A,kernel_A_end,kernel_Fmax,kernel
     #Массив Х есть срез искуственного массива которые считается в функции two_point_line_z
     A2=np.trapz(y=data[Fmax:kernel_L,0],x=(data[Fmax:kernel_L,1]/1000))+np.trapz(y=two_point_line_z(kernel_L, kernel_A_end),x=X/1000)
     A_p_end=A_p_F+A2
-
     kp1=A_p_F/(data[Fmax,0]*data[Fmax,1]/1000)
-    kp2=A2/(data[Fmax,0]*data[Fmax,1]/1000)
-    kp_sum=A_p_end/(data[Fmax,0]*data[Fmax,1]/1000)
+    kp2=A2/(data[Fmax,0]*(kernel_A_end-data[Fmax,1])/1000)
+    kp_sum=A_p_end/(data[Fmax,0]*kernel_A_end/1000)
     k_a=A2/A_p_end
     
     ser=[gran_d,h_ice, h, data[F_max, 0], data[Fmax, 1], k_p, k_w, A_p, A_p_F, A2, A_p_end, kp1, kp2, kp_sum, k_a]
@@ -186,8 +186,11 @@ def addPlot (graph_axes,kernel,kernel_1,kernel_A,kernel_A_end,kernel_Fmax,kernel
      #Строим диаграмму разрушения с отметками
     graph_axes.set_xlabel('Прогиб w, миллиметры')
     graph_axes.set_ylabel('Сила F, Ньютоны')
-    graph_axes.set_title('Диаграмма разрушения ($\o_{гранул}$ = %g мм, $h_{пром}$ = %g мм)'%(gran_d,h_ice))
-    graph_axes.annotate('max F=%.4g Н, w=%.4g мм' %(data[F_max,0],data[Fmax,1]), xy=(data[F_max,1],data[F_max,0]),xytext=(data[F_max,1]-1,data[F_max,0]+.3), size=10)
+    if gran_d!=0:
+        graph_axes.set_title('Диаграмма разрушения ($\o_{гранул}$ = %g мм, $h_{пром}$ = %g мм)'%(gran_d,h_ice))
+    else:
+        graph_axes.set_title('Диаграмма разрушения $h_{пром}$ = %g мм'%(h_ice)) 
+    graph_axes.annotate('max F=%.4g Н, w=%.4g мм' %(data[Fmax,0],data[Fmax,1]), xy=(data[F_max,1],data[F_max,0]),xytext=(data[F_max,1]-1,data[F_max,0]+.3), size=10)
     graph_axes.scatter(data[Fmax,1],data[Fmax,0],color='orange', s=30, marker='o')
     k_D=k_line(kernel) #Получаем коэффициент прямой упругой зоны
     graph_axes.plot((line(-0.6,k_D,0),line(data[Fmax,0]-(data[Fmax,0]/3),k_D,0)),(-0.6,data[Fmax,0]-(data[Fmax,0]/3)), linestyle = '--', linewidth=1, color = 'darkmagenta') #Строим прямую упругой части графика
@@ -257,14 +260,14 @@ if __name__=='__main__':
 
 
     # Создание переключателя для типа гранул
-    axes_radiobuttons = plt.axes([0.01, 0.6, 0.05, 0.05])# координаты left bottom width height
-    radiobuttons= RadioButtons(axes_radiobuttons,['20 мм', '10 мм'])
+    axes_radiobuttons = plt.axes([-0.02, 0.6, 0.11, 0.11], frameon=False, aspect='equal' )# координаты left bottom width height
+    radiobuttons= RadioButtons(axes_radiobuttons,['20 мм', '10 мм', '3 мм', 'Натурный лёд'], activecolor='black')
     radiobuttons.on_clicked(onRadioButtonsClicked)
     onRadioButtonsClicked(radiobuttons.value_selected)# вызов функции события при нажатии на кнопку
 
      # Создание переключателя для типа нагружения
-    axes_radiobuttons_k = plt.axes([0.01, 0.5, 0.05, 0.05])# координаты left bottom width height
-    radiobuttons_k= RadioButtons(axes_radiobuttons_k,['Канал', 'Пролом'])
+    axes_radiobuttons_k = plt.axes([-0.02, 0.5, 0.11, 0.11], frameon=False, aspect='equal' )# координаты left bottom width height
+    radiobuttons_k= RadioButtons(axes_radiobuttons_k,['Канал', 'Пролом'], activecolor='black')
     radiobuttons_k.on_clicked(onRadioButtonsClicked_k)
     onRadioButtonsClicked_k(radiobuttons_k.value_selected)
 
@@ -275,29 +278,29 @@ if __name__=='__main__':
 
     #Создание слайдеров
     # координаты слайдеров
-    ax_h=plt.axes([0.07,0.16,0.85,0.01])
-    ax_kernel=plt.axes([0.07,0.14,0.4,0.01])
-    ax_kernel_1=plt.axes([0.07,0.12,0.4,0.01])
-    ax_kernel_A=plt.axes([0.07,0.1,0.4,0.01])
-    ax_kernel_end=plt.axes([0.52,0.1,0.4,0.01])
-    ax_kernel_F=plt.axes([0.52,0.14,0.4,0.01])
-    ax_kernel_L=plt.axes([0.52,0.12,0.4,0.01])
+    ax_h=plt.axes([0.102,0.16,0.835,0.01])
+    ax_kernel=plt.axes([0.102,0.14,0.375,0.01])
+    ax_kernel_1=plt.axes([0.102,0.12,0.375,0.01])
+    ax_kernel_A=plt.axes([0.102,0.1,0.375,0.01])
+    ax_kernel_end=plt.axes([0.562,0.1,0.375,0.01])
+    ax_kernel_F=plt.axes([0.562,0.14,0.375,0.01])
+    ax_kernel_L=plt.axes([0.562,0.12,0.375,0.01])
 
     def sliders():
         global kernel_S,kernel_1_S, kernel_A_S,kernel_A_end,h_ice_S, kernel_Fmax,kernel_L
-        kernel_S=Slider(ax_kernel,'1) E и D',1,int(len(data[:,0]-100)/3),valinit=501,valfmt='%10.0f')
+        kernel_S=Slider(ax_kernel,'Верхняя точка упр.зоны',1,int(len(data[:,0]-100)/3),valinit=501,valfmt='%10.0f')
         kernel_S.valtext.set_visible(False)
-        kernel_1_S=(Slider(ax_kernel_1,'2)  E и D',1,int(len(data[:,0]-100)/3),valinit=502,valfmt='%10.0f'))
+        kernel_1_S=(Slider(ax_kernel_1,'Нижняя точка упр.зоны',1,int(len(data[:,0]-100)/3),valinit=502,valfmt='%10.0f'))
         kernel_1_S.valtext.set_visible(False)
-        kernel_A_S=(Slider(ax_kernel_A,' Ар',1,int(len(data[:,0]-100)),valinit=int(len(data[:,0])-5000),valfmt='%10.0f'))
+        kernel_A_S=(Slider(ax_kernel_A,'Работа разрушения',1,int(len(data[:,0]-100)),valinit=int(len(data[:,0])-5000),valfmt='%10.0f'))
         kernel_A_S.valtext.set_visible(False)
-        kernel_A_end=(Slider(ax_kernel_end,' Аend',float(x_val[0]),float(x_val[-1]),valinit=float(data[-1,1]),valfmt='%0.01f'))
+        kernel_A_end=(Slider(ax_kernel_end,'Полная работа',float(x_val[0]),float(x_val[-1]),valinit=float(data[-1,1]),valfmt='%0.01f'))
         kernel_A_end.valtext.set_visible(True)
-        kernel_Fmax=(Slider(ax_kernel_F,' Fmax',1,int(len(data[:,0]-100)),valinit=int(F_max),valfmt='%10.0f'))
+        kernel_Fmax=(Slider(ax_kernel_F,'Максимальная сила',1,int(len(data[:,0]-100)),valinit=int(F_max),valfmt='%10.0f'))
         kernel_Fmax.valtext.set_visible(False)
-        kernel_L=(Slider(ax_kernel_L,'Left',int(F_max),int(len(data[:,0])),valinit=int(len(data[:,0])-1),valfmt='%10.0f'))
+        kernel_L=(Slider(ax_kernel_L,'Закрит. часть',int(F_max),int(len(data[:,0])),valinit=int(len(data[:,0])-1),valfmt='%10.0f'))
         kernel_L.valtext.set_visible(False)
-        h_ice_S=(Slider(ax_h,' h_ice',0,20,valinit=10,valfmt='%0.1f',color='red'))
+        h_ice_S=(Slider(ax_h,'Толщина проморозки',0,20,valinit=10,valfmt='%0.1f',color='red'))
 
     sliders()# Вызов слайдеров
 
