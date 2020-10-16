@@ -101,8 +101,10 @@ def calculate_tar (l,r,bat,med,f_p):
 
     data=data1[l:r]
     if i==1 or med_old!=med or bat!=bat_old:
-        F_median=dig_noise(data[:,1],med) #Прогоняем показания датчика силы через медианный фильтр
-        data_filt=np.column_stack((data[:,0],butter_lowpass_filtfilt(F_median, bat),butter_lowpass_filtfilt(data[:,2], bat))) #Прогоняем показания датчиков силы и перемещения через низкочастотный фильтр Баттерворта
+        #Прогоняем показания датчика силы через медианный фильтр
+        F_median=dig_noise(data[:,1],med) 
+        #Прогоняем показания датчиков силы и перемещения через низкочастотный фильтр Баттерворта
+        data_filt=np.column_stack((data[:,0],butter_lowpass_filtfilt(F_median, bat),butter_lowpass_filtfilt(data[:,2], bat)))
         data_mod=np.column_stack((tar_F(data_filt[:,1],null_point=f_p),tar_w(data_filt[:,2],null_point=0))) #Переводим Вольты в Ньютоны и миллиметры
         if i==1:
             filt_old=np.copy(data_filt)

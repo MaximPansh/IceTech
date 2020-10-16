@@ -157,8 +157,6 @@ def addPlot (graph_axes,kernel,kernel_1,kernel_A,kernel_A_end,kernel_Fmax,kernel
     graph_axes.set_xlim([0,int(data[-1,1])+2])
     graph_axes.set_ylim([0,int(data[F_max,0])+2])
 
-    k_p=(data[Fmax,0]/pow((h/10),2))*10 #Вычисление коэффициента нагрузки, кПа
-    k_w=(data[Fmax,1]/10)/pow((h/10),0.5) #Вычисление коэффициента прогиба
 
     if Nag==False: # Работает только когда нагружение по схеме центральный пролом
         D=(pow(data[kernel,0]/(8*data[kernel,1]*0.001),2))/(ro*g) #Вычисление цилиндрической жёсткости ледяной пластины, Н/м
@@ -176,11 +174,11 @@ def addPlot (graph_axes,kernel,kernel_1,kernel_A,kernel_A_end,kernel_Fmax,kernel
     kp_sum=A_p_end/(data[Fmax,0]*kernel_A_end/1000)
     k_a=A2/A_p_end
     
-    ser=[gran_d,h_ice, h, data[F_max, 0], data[Fmax, 1], k_p, k_w, A_p, A_p_F, A2, A_p_end, kp1, kp2, kp_sum, k_a]
+    ser=[gran_d,h_ice, h, data[F_max, 0], data[Fmax, 1], A_p, A_p_F, A2, A_p_end, kp1, kp2, kp_sum, k_a]
     if Nag==False:
         ser+= [D, E, r1]
     Res_pd=pd.Series(ser)
-    Res_pd.to_excel(filename[0:-4]+'.xlsx', float_format="%.4f", index=False, header=False )
+    Res_pd.to_excel(filename[0:-4]+'.xlsx', float_format="%.4f", index=False, header=False)
 
     graph_axes.plot(data[:,1],data[:,0])
      #Строим диаграмму разрушения с отметками
@@ -207,7 +205,7 @@ def addPlot (graph_axes,kernel,kernel_1,kernel_A,kernel_A_end,kernel_Fmax,kernel
 
     if Nag==False:
         graph_axes.annotate('r = %.3g м\nD = %.5g Н/м\nE = 'r'$%.4g\times10^3$ МПа' %(r1,D,E/pow(10,9)), xy=xy1,xytext=xytext1,size=12) #Выводим значения D и E
-    graph_axes.text((data[Fmax,1]-2*(data[Fmax,1]/5)),(data[Fmax,0]/3),'$h_л$ = %.4g мм\n$k_p = %.4g$ кПа\n$k_w = %.4g$ $см^{0.5}$\n$A_р$ = %.4g Дж\n$A_{1} = %.4g$ Дж\n$A_{2} = %.4g$ Дж\n$A_{Σ} =%.4g$ Дж\n$k_{p1} = %.4g$\n$k_{p2} = %.4g$ \n$k_{pΣ} = %.4g$ \n$k_{A2} = %.4g$ '%(h,k_p,k_w,A_p,A_p_F,A2,A_p_end,kp1,kp2,kp_sum,k_a),size=14)
+    graph_axes.text((data[Fmax,1]-2*(data[Fmax,1]/5)),(data[Fmax,0]/3),'$h_л$ = %.4g мм\n$A_р$ = %.4g Дж\n$A_{1} = %.4g$ Дж\n$A_{2} = %.4g$ Дж\n$A_{Σ} =%.4g$ Дж\n$k_{p1} = %.4g$\n$k_{p2} = %.4g$ \n$k_{pΣ} = %.4g$ \n$k_{A2} = %.4g$ '%(h,A_p,A_p_F,A2,A_p_end,kp1,kp2,kp_sum,k_a),size=14)
 
     plt.draw()
 
@@ -237,79 +235,73 @@ def interact_point(graph_axes,kernel,kernel_1,kernel_A,kernel_A_end,kernel_Fmax,
     plt.draw()
     
     
-if __name__=='__main__':
-    def onButtonClicked(event):
-        #Обработчик событий нажатия на кнопку
-        global kernel_S,kernel_1_S,kernel_A_S,kernel_A_end,kernel_Fmax,graph_axes,fig
-        plt.clf()#очистка всего поля Figure
-        graph_axes = fig.add_subplot(111)
-        graph_axes.grid()
-        addPlot(graph_axes,kernel_S.val,kernel_1_S.val,kernel_A_S.val,kernel_A_end.val,kernel_Fmax.val,kernel_L.val)
-        
-        np.savetxt(filename[0:-4]+'_new.txt',data)#сохранение файла в то же место но с новым именем для будущих нужд
-
-    def Change_slider(value):
-        interact_point(graph_axes,kernel_S.val,kernel_1_S.val,kernel_A_S.val,kernel_A_end.val,kernel_Fmax.val,kernel_L.val)
-
-    # создаем окно с графиком
-    fig,graph_axes=plt.subplots()
+def onButtonClicked(event):
+    #Обработчик событий нажатия на кнопку
+    global kernel_S,kernel_1_S,kernel_A_S,kernel_A_end,kernel_Fmax,graph_axes,fig
+    plt.clf()#очистка всего поля Figure
+    graph_axes = fig.add_subplot(111)
     graph_axes.grid()
+    addPlot(graph_axes,kernel_S.val,kernel_1_S.val,kernel_A_S.val,kernel_A_end.val,kernel_Fmax.val,kernel_L.val)    
+    np.savetxt(filename[0:-4]+'_new.txt',data)#сохранение файла в то же место но с новым именем для будущих нужд
 
-    # оставляем снизу графика место под виджеты
-    fig.subplots_adjust(left=0.08,right=0.95, top= 0.97, bottom=0.2)
+def Change_slider(value):
+    interact_point(graph_axes,kernel_S.val,kernel_1_S.val,kernel_A_S.val,kernel_A_end.val,kernel_Fmax.val,kernel_L.val)
 
+# создаем окно с графиком
+fig,graph_axes=plt.subplots()
+graph_axes.grid()
 
-    # Создание переключателя для типа гранул
-    axes_radiobuttons = plt.axes([-0.02, 0.6, 0.11, 0.11], frameon=False, aspect='equal' )# координаты left bottom width height
-    radiobuttons= RadioButtons(axes_radiobuttons,['20 мм', '10 мм', '3 мм', 'Натурный лёд'], activecolor='black')
-    radiobuttons.on_clicked(onRadioButtonsClicked)
-    onRadioButtonsClicked(radiobuttons.value_selected)# вызов функции события при нажатии на кнопку
+# оставляем снизу графика место под виджеты
+fig.subplots_adjust(left=0.08,right=0.95, top= 0.97, bottom=0.2)
+# Создание переключателя для типа гранул
+axes_radiobuttons = plt.axes([-0.02, 0.6, 0.11, 0.11], frameon=False, aspect='equal' )# координаты left bottom width height
+radiobuttons= RadioButtons(axes_radiobuttons,['20 мм', '10 мм', '3 мм', 'Натурный лёд'], activecolor='black')
+radiobuttons.on_clicked(onRadioButtonsClicked)
+onRadioButtonsClicked(radiobuttons.value_selected)# вызов функции события при нажатии на кнопку
+# Создание переключателя для типа нагружения
+axes_radiobuttons_k = plt.axes([-0.02, 0.5, 0.11, 0.11], frameon=False, aspect='equal' )# координаты left bottom width height
+radiobuttons_k= RadioButtons(axes_radiobuttons_k,['Канал', 'Пролом'], activecolor='black')
+radiobuttons_k.on_clicked(onRadioButtonsClicked_k)
+onRadioButtonsClicked_k(radiobuttons_k.value_selected)
 
-     # Создание переключателя для типа нагружения
-    axes_radiobuttons_k = plt.axes([-0.02, 0.5, 0.11, 0.11], frameon=False, aspect='equal' )# координаты left bottom width height
-    radiobuttons_k= RadioButtons(axes_radiobuttons_k,['Канал', 'Пролом'], activecolor='black')
-    radiobuttons_k.on_clicked(onRadioButtonsClicked_k)
-    onRadioButtonsClicked_k(radiobuttons_k.value_selected)
+# Создание кнопки "Пересчет"
+axes_button_add=plt.axes([0.35,0.02,0.1,0.04])# координаты left bottom width height
+button_add=Button(axes_button_add,'Пересчёт')
+button_add.on_clicked(onButtonClicked)
 
-    # Создание кнопки "Пересчет"
-    axes_button_add=plt.axes([0.35,0.02,0.1,0.04])# координаты left bottom width height
-    button_add=Button(axes_button_add,'Пересчёт')
-    button_add.on_clicked(onButtonClicked)
+#Создание слайдеров
+# координаты слайдеров
+ax_h=plt.axes([0.102,0.16,0.835,0.01])
+ax_kernel=plt.axes([0.102,0.14,0.375,0.01])
+ax_kernel_1=plt.axes([0.102,0.12,0.375,0.01])
+ax_kernel_A=plt.axes([0.102,0.1,0.375,0.01])
+ax_kernel_end=plt.axes([0.562,0.1,0.375,0.01])
+ax_kernel_F=plt.axes([0.562,0.14,0.375,0.01])
+ax_kernel_L=plt.axes([0.562,0.12,0.375,0.01])
 
-    #Создание слайдеров
-    # координаты слайдеров
-    ax_h=plt.axes([0.102,0.16,0.835,0.01])
-    ax_kernel=plt.axes([0.102,0.14,0.375,0.01])
-    ax_kernel_1=plt.axes([0.102,0.12,0.375,0.01])
-    ax_kernel_A=plt.axes([0.102,0.1,0.375,0.01])
-    ax_kernel_end=plt.axes([0.562,0.1,0.375,0.01])
-    ax_kernel_F=plt.axes([0.562,0.14,0.375,0.01])
-    ax_kernel_L=plt.axes([0.562,0.12,0.375,0.01])
+def sliders():
+    global kernel_S,kernel_1_S, kernel_A_S,kernel_A_end,h_ice_S, kernel_Fmax,kernel_L
+    kernel_S=Slider(ax_kernel,'Верхняя точка упр.зоны',1,int(len(data[:,0]-100)/3),valinit=501,valfmt='%10.0f')
+    kernel_S.valtext.set_visible(False)
+    kernel_1_S=(Slider(ax_kernel_1,'Нижняя точка упр.зоны',1,int(len(data[:,0]-100)/3),valinit=502,valfmt='%10.0f'))
+    kernel_1_S.valtext.set_visible(False)
+    kernel_A_S=(Slider(ax_kernel_A,'Работа разрушения',1,int(len(data[:,0]-100)),valinit=int(len(data[:,0])-5000),valfmt='%10.0f'))
+    kernel_A_S.valtext.set_visible(False)
+    kernel_A_end=(Slider(ax_kernel_end,'Полная работа',float(x_val[0]),float(x_val[-1]),valinit=float(data[-1,1]),valfmt='%0.01f'))
+    kernel_A_end.valtext.set_visible(False)
+    kernel_Fmax=(Slider(ax_kernel_F,'Максимальная сила',1,int(len(data[:,0]-100)),valinit=int(F_max),valfmt='%10.0f'))
+    kernel_Fmax.valtext.set_visible(False)
+    kernel_L=(Slider(ax_kernel_L,'Закрит. часть',int(F_max),int(len(data[:,0])),valinit=int(len(data[:,0])-1),valfmt='%10.0f'))
+    kernel_L.valtext.set_visible(False)
+    h_ice_S=(Slider(ax_h,'Толщина проморозки',0,20,valinit=10,valfmt='%0.1f',color='red'))
 
-    def sliders():
-        global kernel_S,kernel_1_S, kernel_A_S,kernel_A_end,h_ice_S, kernel_Fmax,kernel_L
-        kernel_S=Slider(ax_kernel,'Верхняя точка упр.зоны',1,int(len(data[:,0]-100)/3),valinit=501,valfmt='%10.0f')
-        kernel_S.valtext.set_visible(False)
-        kernel_1_S=(Slider(ax_kernel_1,'Нижняя точка упр.зоны',1,int(len(data[:,0]-100)/3),valinit=502,valfmt='%10.0f'))
-        kernel_1_S.valtext.set_visible(False)
-        kernel_A_S=(Slider(ax_kernel_A,'Работа разрушения',1,int(len(data[:,0]-100)),valinit=int(len(data[:,0])-5000),valfmt='%10.0f'))
-        kernel_A_S.valtext.set_visible(False)
-        kernel_A_end=(Slider(ax_kernel_end,'Полная работа',float(x_val[0]),float(x_val[-1]),valinit=float(data[-1,1]),valfmt='%0.01f'))
-        kernel_A_end.valtext.set_visible(True)
-        kernel_Fmax=(Slider(ax_kernel_F,'Максимальная сила',1,int(len(data[:,0]-100)),valinit=int(F_max),valfmt='%10.0f'))
-        kernel_Fmax.valtext.set_visible(False)
-        kernel_L=(Slider(ax_kernel_L,'Закрит. часть',int(F_max),int(len(data[:,0])),valinit=int(len(data[:,0])-1),valfmt='%10.0f'))
-        kernel_L.valtext.set_visible(False)
-        h_ice_S=(Slider(ax_h,'Толщина проморозки',0,20,valinit=10,valfmt='%0.1f',color='red'))
+sliders()# Вызов слайдеров
+# При изменении значения ползунка вызывается функция с новым значением ползунка
+kernel_S.on_changed(Change_slider)
+kernel_1_S.on_changed(Change_slider)
+kernel_A_S.on_changed(Change_slider)
+kernel_A_end.on_changed(Change_slider)
+kernel_Fmax.on_changed(Change_slider)
+kernel_L.on_changed(Change_slider)
 
-    sliders()# Вызов слайдеров
-
-    # При изменении значения ползунка вызывается функция с новым значением ползунка
-    kernel_S.on_changed(Change_slider)
-    kernel_1_S.on_changed(Change_slider)
-    kernel_A_S.on_changed(Change_slider)
-    kernel_A_end.on_changed(Change_slider)
-    kernel_Fmax.on_changed(Change_slider)
-    kernel_L.on_changed(Change_slider)
-
-    plt.show()
+plt.show()
