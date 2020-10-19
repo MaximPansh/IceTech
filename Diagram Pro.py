@@ -5,7 +5,6 @@ import pandas as pd
 from matplotlib.widgets import Button, Slider, RadioButtons
 from tkinter.filedialog import askopenfilename
 
-SET_VAL = 5
 def open_datafile(path,a=1,b=20000000):
     """
     Открыть файл с экспериментальными данными
@@ -127,34 +126,33 @@ def two_point_line_z(arg_1, arg_2):
 
     return (((X-x1)*(0-y1))/(x2-x1))+y1# Y выраженый из уравнения прямой через 2 точки
 
-
-def addPlot (graph_axes,kernel,kernel_1,kernel_A,kernel_A_end,kernel_Fmax,kernel_L):
+# добавить ,kernel_A если возвращать работу разрушения на 4 позицию здесь
+def addPlot (graph_axes,kernel,kernel_1,kernel_A_end,kernel_Fmax,kernel_L):
     """
     Функция строющая окончательный граффик, принимает значения со слайдеров
     """
     graph_axes.clear()
     graph_axes.grid()
     plt.draw()   # очистка поля графика
-    h_ice=round(h_ice_S.val, 2) #Толщина промороженного слоя округление до 1 знака после запятой
+    #h_ice=round(h_ice_S.val, 2) #Толщина промороженного слоя округление до 1 знака после запятой
     if gran_d!=0: 
         h=round(onelayer_h(h_ice,gran_d),1) # нахождение приведенной толщины льда и её округление
     else:
         h=h_ice
     kernel=int(kernel)
     kernel_1=int(kernel_1)
-    kernel_A=int(kernel_A)
-    kernel_A_end=float(kernel_A_end)# Можно использовать float т.к. далее это число используется только в исскуственным массивом
+   # kernel_A=int(kernel_A)
+    kernel_A_end=float(kernel_A_end)-two_point_line(kernel, kernel_1)# Можно использовать float т.к. далее это число используется только в исскуственным массивом
     Fmax=int(kernel_Fmax)
     kernel_L=int(kernel_L) #int необходим там где идет работа с конкретной величиной индекса в массиве данных
 
     data[:,1]=corect_w(data,two_point_line(kernel, kernel_1))  # коректировка перемещения и как следствие массива данных
     # лимиты отображения области
+    graph_axes.set_xlim([0,int(kernel_A_end+1)])  
     if data[F_max, 0] < 8:
-        graph_axes.set_ylim([0,int(data[F_max,0])+0.7])
-        graph_axes.set_xlim([0,int(kernel_A_end+1)])
+        graph_axes.set_ylim([0,int(data[F_max,0])+2])
     else:
-        graph_axes.set_xlim([0,int(kernel_A_end+1)])               
-        graph_axes.set_ylim([0,int(data[F_max,0])+3])
+        graph_axes.set_ylim([0,int(data[F_max,0])+4])
 
 
     if Nag==False: # Работает только когда нагружение по схеме центральный пролом
@@ -162,11 +160,11 @@ def addPlot (graph_axes,kernel,kernel_1,kernel_A,kernel_A_end,kernel_Fmax,kernel
         E=(D*12*(1-pow(puas,2)))/pow(h/1000,3) #Вычисление модуля упругости, Па
         r1=1/((ro*g/D)**0.25)# вычисление линейного размера пластины, м
         if gran_d == 0:
-            D=(pow((1000 * data[kernel,0])/(8*data[kernel,1]*0.01),2))/(ro*g)
+            D=(pow((1000 * data[kernel,0]) / (8 * data[kernel,1] * 0.01), 2))/(ro * g)
             E=(D*12*(1-pow(puas,2)))/pow(h/1000,3)
             r1=1/((ro*g/D)**0.25)
     if gran_d != 0:
-        A_p=np.trapz(y=data[:kernel_A,0],x=(data[:kernel_A,1]/1000)) #Определение работы разрушения
+#        A_p=np.trapz(y=data[:kernel_A,0],x=(data[:kernel_A,1]/1000)) #Определение работы разрушения
         A_p_F=np.trapz(y=data[:Fmax,0],x=(data[:Fmax,1]/1000))   # Определение работы до Fmax
         # Работа поссле Fmax складывается из работы от точки Fmax до точки L cо слайдера и работы под прямой посчитаной от точки L до A_end.
         #Массив Х есть срез искуственного массива которые считается в функции two_point_line_z
@@ -179,7 +177,7 @@ def addPlot (graph_axes,kernel,kernel_1,kernel_A,kernel_A_end,kernel_Fmax,kernel
     else:
         data1 = np.copy(data)
         data1[:,0] *= 1000
-        A_p=np.trapz(y=data1[:kernel_A,0],x=(data1[:kernel_A,1] / 100)) #Определение работы разрушения
+#        A_p=np.trapz(y=data1[:kernel_A,0],x=(data1[:kernel_A,1] / 100)) #Определение работы разрушения
         A_p_F=np.trapz(y=data1[:Fmax,0],x=(data1[:Fmax,1] / 100))   # Определение работы до Fmax
         # Работа поссле Fmax складывается из работы от точки Fmax до точки L cо слайдера и работы под прямой посчитаной от точки L до A_end.
         #Массив Х есть срез искуственного массива которые считается в функции two_point_line_z
@@ -189,8 +187,8 @@ def addPlot (graph_axes,kernel,kernel_1,kernel_A,kernel_A_end,kernel_Fmax,kernel
         kp2=A2/(data1[F_max,0]*(kernel_A_end-data1[Fmax,1]) / 100)
         kp_sum=A_p_end/(data1[F_max,0]*kernel_A_end / 100)
         k_a=A2/A_p_end
-    
-    ser=[gran_d,h_ice, h, data[F_max, 0], data[Fmax, 1], A_p, A_p_F, A2, A_p_end, kp1, kp2, kp_sum, k_a]
+    #здесь , A_p
+    ser=[gran_d,h_ice, h, data[F_max, 0], data[Fmax, 1], A_p_F, A2, A_p_end, kp1, kp2, kp_sum, k_a]#Добавить работу разрушения здесь
     if Nag==False:
         ser+= [D, E, r1]
     Res_pd=pd.Series(ser)
@@ -220,11 +218,11 @@ def addPlot (graph_axes,kernel,kernel_1,kernel_A,kernel_A_end,kernel_Fmax,kernel
     graph_axes.plot((line(-0.6,k_D,0),line(data[Fmax,0]-(data[Fmax,0]/3),k_D,0)),(-0.6,data[Fmax,0]-(data[Fmax,0]/3)), linestyle = '--', linewidth=1, color = 'darkmagenta') #Строим прямую упругой части графика
     graph_axes.scatter(data[kernel,1],data[kernel,0],color='orange', s=30, marker='o') #Точка по которой строили прямую и считали D и E
     graph_axes.scatter(data[kernel_1,1],data[kernel_1,0],color='orange', s=30, marker='o') #Вторая точка прямой упругой зоны
-    graph_axes.scatter(data[kernel_A,1],data[kernel_A,0],color='orange', s=30, marker='o') #Точка по которой считали работу разрушения
+    #graph_axes.scatter(data[kernel_A,1],data[kernel_A,0],color='orange', s=30, marker='o') #Точка по которой считали работу разрушения
     graph_axes.scatter(data[Fmax,1],data[Fmax,0],color='red', s=30, marker='o') #Точка по которой считали работу по максимальной силе
     graph_axes.plot((data[Fmax,1],data[Fmax,1]),(data[Fmax,0],0), linestyle = '--', linewidth=1, color = 'darkmagenta')
-    graph_axes.plot((data[kernel_A,1],data[kernel_A,1]),(data[kernel_A,0],0), linestyle = '--', linewidth=1, color = 'darkmagenta')
-    graph_axes.plot([kernel_A_end,data[kernel_L,1]],[0,data[kernel_L,0]], linestyle = '--', linewidth=1, color = 'darkmagenta') #Строим прямую упругой части графика
+    #graph_axes.plot((data[kernel_A,1],data[kernel_A,1]),(data[kernel_A,0],0), linestyle = '--', linewidth=1, color = 'darkmagenta')
+    graph_axes.plot([kernel_A_end,data[kernel_L,1]],[0,data[kernel_L,0]], linestyle = '--', linewidth=1, color = 'darkmagenta') #Строим прямую закритической части диаграммы
     graph_axes.scatter(data[kernel_L,1],data[kernel_L,0],color='orange', s=30, marker='o')
     xy1=(data[kernel,1],data[kernel,0])
     xytext1=(data[kernel,1]+0.25,data[kernel,0]-.2)
@@ -232,13 +230,13 @@ def addPlot (graph_axes,kernel,kernel_1,kernel_A,kernel_A_end,kernel_Fmax,kernel
     if Nag==False:
         graph_axes.annotate('$r_{0}$ = %.3g м\nD = %.5g Н/м\nE = 'r'$%.4g\times10^3$ МПа' %(r1,D,E/pow(10,9)), xy=xy1,xytext=xytext1,size=12) #Выводим значения D и E
     
-    
-    graph_axes.text((data[Fmax,1]-2*(data[Fmax,1]/5)),(data[Fmax,0]/3),'$h_л$ = %.4g мм\n$A_р$ = %.5g Дж\n$A_{1} = %.5g$ Дж\n$A_{2} = %.5g$ Дж\n$A_{Σ} =%.5g$ Дж\n$k_{A1} = %.4g$\n$k_{A2} = %.4g$ \n$k_{AΣ} = %.4g$ \n$A_{2}/A_{Σ} = %.4g$ '%(h,A_p,A_p_F,A2,A_p_end,kp1,kp2,kp_sum,k_a),size=14)
+    #здесь \n$A_р$ = %.5g Дж во 2 позицию и ,A_p
+    graph_axes.text((data[Fmax,1]-2*(data[Fmax,1]/5)),(data[Fmax,0]/3),'$h_л$ = %.4g мм\n$A_{1} = %.5g$ Дж\n$A_{2} = %.5g$ Дж\n$A_{Σ} =%.5g$ Дж\n$k_{A1} = %.4g$\n$k_{A2} = %.4g$ \n$k_{AΣ} = %.4g$ \n$A_{2}/A_{Σ} = %.4g$ '%(h,A_p_F,A2,A_p_end,kp1,kp2,kp_sum,k_a),size=14)
     fig.savefig(filename[0:-4]+'.png')
     plt.draw()
 
-
-def interact_point(graph_axes,kernel,kernel_1,kernel_A,kernel_A_end,kernel_Fmax,kernel_L):
+# добавить ,kernel_A если возвращать работу разрушения на 4 позицию здесь
+def interact_point(graph_axes,kernel,kernel_1,kernel_A_end,kernel_Fmax,kernel_L):
     """ Функция интерактивного взаимодействия с областью построения. Ничего не считает выводит только граффику"""
 
     graph_axes.clear()
@@ -246,7 +244,7 @@ def interact_point(graph_axes,kernel,kernel_1,kernel_A,kernel_A_end,kernel_Fmax,
 
     kernel=int(kernel)
     kernel_1=int(kernel_1)
-    kernel_A=int(kernel_A)
+    #kernel_A=int(kernel_A)
     kernel_A_end=float(kernel_A_end)
     kernel_Fmax=int(kernel_Fmax)
     kernel_L=int(kernel_L)
@@ -254,8 +252,8 @@ def interact_point(graph_axes,kernel,kernel_1,kernel_A,kernel_A_end,kernel_Fmax,
     graph_axes.plot(data[:,1],data[:,0])
     graph_axes.scatter(data[kernel,1],data[kernel,0],color='orange', s=30, marker='o') #Точка по которой строили прямую и считали D и E
     graph_axes.scatter(data[kernel_1,1],data[kernel_1,0],color='orange', s=30, marker='o') #Вторая точка прямой упругой зоны
-    graph_axes.scatter(data[kernel_A,1],data[kernel_A,0],color='orange', s=30, marker='o') #Точка по которой считали работу разрушения
-    graph_axes.plot((data[kernel_A,1],data[kernel_A,1]),(data[kernel_A,0],0), linestyle = '--', linewidth=1, color = 'darkmagenta')
+   # graph_axes.scatter(data[kernel_A,1],data[kernel_A,0],color='orange', s=30, marker='o') #Точка по которой считали работу разрушения
+   # graph_axes.plot((data[kernel_A,1],data[kernel_A,1]),(data[kernel_A,0],0), linestyle = '--', linewidth=1, color = 'darkmagenta')
     graph_axes.scatter(data[kernel_Fmax,1],data[kernel_Fmax,0],color='red', s=30, marker='o') #Точка по которой считали работу по максимальной силе
     graph_axes.plot((data[kernel_Fmax,1],data[kernel_Fmax,1]),(data[kernel_Fmax,0],0), linestyle = '--', linewidth=1, color = 'darkmagenta')
     graph_axes.plot([kernel_A_end,data[kernel_L,1]],[0,data[kernel_L,0]], linestyle = '--', linewidth=1, color = 'darkmagenta') #Строим прямую упругой части графика
@@ -270,21 +268,23 @@ def onButtonClicked(event):
     plt.clf()#очистка всего поля Figure
     graph_axes = fig.add_subplot(111)
     graph_axes.grid()
-    addPlot(graph_axes,kernel_S.val,kernel_1_S.val,kernel_A_S.val,kernel_A_end.val,kernel_Fmax.val,kernel_L.val)    
+    #Если возвращать работу разрушения - добавить сюда 4 переменной ,kernel_A_S.val здесь
+    addPlot(graph_axes,kernel_S.val,kernel_1_S.val,kernel_A_end.val,kernel_Fmax.val,kernel_L.val)    
     np.savetxt(filename[0:-4]+'_new.txt',data)#сохранение файла в то же место но с новым именем для будущих нужд
     
-
 def Change_slider(value):
-    interact_point(graph_axes,kernel_S.val,kernel_1_S.val,kernel_A_S.val,kernel_A_end.val,kernel_Fmax.val,kernel_L.val)
+     #Если возвращать работу разрушения - добавить сюда 4 переменной ,kernel_A_S.val здесь
+    interact_point(graph_axes,kernel_S.val,kernel_1_S.val,kernel_A_end.val,kernel_Fmax.val,kernel_L.val)
+   
 
 def sliders():
     global kernel_S,kernel_1_S, kernel_A_S,kernel_A_end,h_ice_S, kernel_Fmax,kernel_L
     #Создание слайдеров
     # координаты слайдеров
-    ax_h=plt.axes([0.102,0.16,0.835,0.01])
+    #ax_h=plt.axes([0.102,0.16,0.835,0.01])
     ax_kernel=plt.axes([0.102,0.14,0.375,0.01])
     ax_kernel_1=plt.axes([0.102,0.12,0.375,0.01])
-    ax_kernel_A=plt.axes([0.102,0.1,0.375,0.01])
+    #ax_kernel_A=plt.axes([0.102,0.1,0.375,0.01])
     ax_kernel_end=plt.axes([0.562,0.1,0.375,0.01])
     ax_kernel_F=plt.axes([0.562,0.14,0.375,0.01])
     ax_kernel_L=plt.axes([0.562,0.12,0.375,0.01])
@@ -292,21 +292,38 @@ def sliders():
     kernel_S.valtext.set_visible(False)
     kernel_1_S=(Slider(ax_kernel_1,'Нижняя точка упр.зоны',1,int(len(data[:,0]-100)/3),valinit=502,valfmt='%10.0f'))
     kernel_1_S.valtext.set_visible(False)
-    kernel_A_S=(Slider(ax_kernel_A,'Работа разрушения',1,int(len(data[:,0]-100)),valinit=int(len(data[:,0])-5000),valfmt='%10.0f'))
-    kernel_A_S.valtext.set_visible(False)
+    #kernel_A_S=(Slider(ax_kernel_A,'Работа разрушения',1,int(len(data[:,0]-100)),valinit=int(len(data[:,0])-5000),valfmt='%10.0f'))
+    #kernel_A_S.valtext.set_visible(False)
     kernel_A_end=(Slider(ax_kernel_end,'Полная работа',float(x_val[0]),float(x_val[-1]),valinit=float(data[-1,1]),valfmt='%0.01f'))
     kernel_A_end.valtext.set_visible(False)
     kernel_Fmax=(Slider(ax_kernel_F,'Максимальная сила',1,int(len(data[:,0]-100)),valinit=int(F_max),valfmt='%10.0f'))
     kernel_Fmax.valtext.set_visible(False)
     kernel_L=(Slider(ax_kernel_L,'Закрит. часть',int(F_max),int(len(data[:,0])),valinit=int(len(data[:,0])-1),valfmt='%10.0f'))
     kernel_L.valtext.set_visible(False)
-    h_ice_S=(Slider(ax_h,'Толщина проморозки',0,55,valinit=SET_VAL,valfmt='%0.01f',color='red'))
-
+    #h_ice_S=(Slider(ax_h,'Толщина проморозки',0,55,valinit=SET_VAL,valfmt='%0.01f',color='red'))
+def h_of_ice():
+    global h_ice
+    print("Введите толщину льда")
+    h_ice=input()
+    try:
+        h_ice = float(h_ice)
+    
+    except:
+        try:
+            h_list=h_ice.split(',')
+            h_ice=h_list[0] + '.' + h_list[1]
+            h_ice=float(h_ice)
+        except:
+            h_list=h_ice.split('/')
+            h_ice=h_list[0] + '.' + h_list[1]
+            h_ice=float(h_ice) 
+       
 puas=0.35 #Значение коэффициента Пуассона льда
 g=9.81 #Ускорение свободного падения
 ro=1000 #Плотность воды, кг/куб.м
 filename=askopenfilename()# Вызов окна открытия файла
 data=open_datafile(filename) #Открыть файл с данными диаграммы разрушени
+h_of_ice()
 F_max=np.argmax(data[:, 0]) #индекс значения максимальной силы в массиве
 x_val=np.arange(data[F_max,1],5*data[F_max,1]+0.01,0.01)# массив для работы с закритической частью диаграммы
 # создаем окно с графиком
@@ -336,7 +353,7 @@ button_add.on_clicked(onButtonClicked)
 # При изменении значения ползунка вызывается функция с новым значением ползунка
 kernel_S.on_changed(Change_slider)
 kernel_1_S.on_changed(Change_slider)
-kernel_A_S.on_changed(Change_slider)
+#kernel_A_S.on_changed(Change_slider)
 kernel_A_end.on_changed(Change_slider)
 kernel_Fmax.on_changed(Change_slider)
 kernel_L.on_changed(Change_slider)
