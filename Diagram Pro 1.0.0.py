@@ -5,26 +5,29 @@ import pandas as pd
 from matplotlib.widgets import Button, Slider, RadioButtons
 from tkinter.filedialog import askopenfilename
 
-
-def open_datafile(path):
+SET_VAL = 5
+def open_datafile(path,a=1,b=20000000):
     """
-    Открыть файл с данными диаграммы разрушения
-    Запрашивает: путь к файлу(строковый тип)
-    Возвращает массив из 2-х столбцов: сила, прогиб (диаграмма без "хвостов")
+    Открыть файл с экспериментальными данными
+    Запрашивает: путь к файлу(строковый тип), левая граница промежутка, правая граница промежутка 
+    Возвращает массив из 3-х столбцов: время, сила, прогиб
     """
-
-    file=open(path, encoding= 'ansi')#перекодировка из utf-8 в ansi из за странной ошибки в спайдере
-    data=pd.read_csv(file, sep='\s+' )#Читаю из тестового документа в качестве сепаратора: все пробелы
+    
+    try:
+        file= open(path,encoding= 'ansi')#перекодировка из utf-8 в ansi из за странной ошибки в спайдере
+        data=pd.read_csv(file,sep='\s+' ,decimal="." )
+        data=np.array(data.values)    #перевод значений в массив Numpy
+        float(data[20,0])
+        
+    except ValueError:
+        file= open(path,encoding= 'ansi')#перекодировка из utf-8 в ansi из за странной ошибки в спайдере
+        data=pd.read_csv(file,sep='\s+' ,decimal="," ) #Читаю из тестового документа в качестве сепаратора: все пробелы
+        data=np.array(data.values) 
+        data = np.flip(data, axis = 1)#перевод значений в массив Numpy
+        
     #у переменной data сейчас тип dataframe
     file.close()
-    data=np.array(data.values)    #перевод значений в массив Numpy
-    supercritical=np.argwhere(data[:, 1]>data[np.argmax(data[:, 0]),1])[:, 0]#массив, содержащий индексы элементов закритической части диаграммы
-    if np.sum(data[supercritical, 0] < 0) > 0: #Проверяем пересекает ли 0 диаграмма в закритической части
-        qes=np.argwhere(data[supercritical,0]<0)[0]+np.argmax(data[:, 0]) #Если да, то учитываем только значения до 0
-    else: #Если нет, то учитываем только какое-то количество элементов
-        qes=np.array(len(data[:, 0]))-1
-
-    return data[np.logical_and(data[:,1]>=0, data[:, 1]<=data[qes, 1])] #возвращаем значения диаграммы разрушения без "хвостов"
+    return data[a:(b+1)]
 
 
 def onelayer_h (h,d):
@@ -80,12 +83,12 @@ def corect_w(data, w):
 
 def onRadioButtonsClicked(label):
     """
-    Обработчик события при клике по типу гранул
+    Обработчик события при клике по radiobuttons типу гранул
     """
     global gran_d
     value_dic = {'20 мм' : 20,'10 мм' : 10, '3 мм' : 3,'Натурный лёд': 0 }#словарь со значениями диаметров
     gran_d=value_dic[label] # вызов значения из словаря label это то что приходит в функцию при клике на кнопку
-    #gran_d=value(radiobuttons.value_selected)
+
 
 def onRadioButtonsClicked_k(label):
     """
@@ -98,15 +101,7 @@ def onRadioButtonsClicked_k(label):
 
 '''Значения констант'''
 
-puas=0.35 #Значение коэффициента Пуассона льда
-g=9.81 #Ускорение свободного падения
-ro=1000 #Плотность воды, кг/куб.м
 
-
-filename=askopenfilename()# Вызов окна открытия файла
-data=open_datafile(filename) #Открыть файл с данными диаграммы разрушения
-F_max=np.argmax(data[:, 0]) #индекс значения максимальной силы в массиве
-x_val=np.arange(data[F_max,1],2.5*data[F_max,1]+0.01,0.01)# массив для работы с закритической частью диаграммы
 def two_point_line_z(arg_1, arg_2):
     """
     Функция построения прямой для продолжения закритической части
@@ -140,7 +135,7 @@ def addPlot (graph_axes,kernel,kernel_1,kernel_A,kernel_A_end,kernel_Fmax,kernel
     graph_axes.clear()
     graph_axes.grid()
     plt.draw()   # очистка поля графика
-    h_ice=round(h_ice_S.val, 1) #Толщина промороженного слоя округление до 1 знака после запятой
+    h_ice=round(h_ice_S.val, 2) #Толщина промороженного слоя округление до 1 знака после запятой
     if gran_d!=0: 
         h=round(onelayer_h(h_ice,gran_d),1) # нахождение приведенной толщины льда и её округление
     else:
@@ -154,41 +149,72 @@ def addPlot (graph_axes,kernel,kernel_1,kernel_A,kernel_A_end,kernel_Fmax,kernel
 
     data[:,1]=corect_w(data,two_point_line(kernel, kernel_1))  # коректировка перемещения и как следствие массива данных
     # лимиты отображения области
-    graph_axes.set_xlim([0,int(kernel_A_end+1)])               
-    graph_axes.set_ylim([0,int(data[F_max,0])+2])
+    if data[F_max, 0] < 8:
+        graph_axes.set_ylim([0,int(data[F_max,0])+0.7])
+        graph_axes.set_xlim([0,int(kernel_A_end+1)])
+    else:
+        graph_axes.set_xlim([0,int(kernel_A_end+1)])               
+        graph_axes.set_ylim([0,int(data[F_max,0])+3])
 
 
     if Nag==False: # Работает только когда нагружение по схеме центральный пролом
         D=(pow(data[kernel,0]/(8*data[kernel,1]*0.001),2))/(ro*g) #Вычисление цилиндрической жёсткости ледяной пластины, Н/м
         E=(D*12*(1-pow(puas,2)))/pow(h/1000,3) #Вычисление модуля упругости, Па
         r1=1/((ro*g/D)**0.25)# вычисление линейного размера пластины, м
-
-    A_p=np.trapz(y=data[:kernel_A,0],x=(data[:kernel_A,1]/1000)) #Определение работы разрушения
-    A_p_F=np.trapz(y=data[:Fmax,0],x=(data[:Fmax,1]/1000))   # Определение работы до Fmax
-    # Работа поссле Fmax складывается из работы от точки Fmax до точки L cо слайдера и работы под прямой посчитаной от точки L до A_end.
-    #Массив Х есть срез искуственного массива которые считается в функции two_point_line_z
-    A2=np.trapz(y=data[Fmax:kernel_L,0],x=(data[Fmax:kernel_L,1]/1000))+np.trapz(y=two_point_line_z(kernel_L, kernel_A_end),x=X/1000)
-    A_p_end=A_p_F+A2
-    kp1=A_p_F/(data[Fmax,0]*data[Fmax,1]/1000)
-    kp2=A2/(data[Fmax,0]*(kernel_A_end-data[Fmax,1])/1000)
-    kp_sum=A_p_end/(data[Fmax,0]*kernel_A_end/1000)
-    k_a=A2/A_p_end
+        if gran_d == 0:
+            D=(pow((1000 * data[kernel,0])/(8*data[kernel,1]*0.01),2))/(ro*g)
+            E=(D*12*(1-pow(puas,2)))/pow(h/1000,3)
+            r1=1/((ro*g/D)**0.25)
+    if gran_d != 0:
+        A_p=np.trapz(y=data[:kernel_A,0],x=(data[:kernel_A,1]/1000)) #Определение работы разрушения
+        A_p_F=np.trapz(y=data[:Fmax,0],x=(data[:Fmax,1]/1000))   # Определение работы до Fmax
+        # Работа поссле Fmax складывается из работы от точки Fmax до точки L cо слайдера и работы под прямой посчитаной от точки L до A_end.
+        #Массив Х есть срез искуственного массива которые считается в функции two_point_line_z
+        A2=np.trapz(y=data[Fmax:kernel_L,0],x=(data[Fmax:kernel_L,1]/1000))+np.trapz(y=two_point_line_z(kernel_L, kernel_A_end),x=X/1000)
+        A_p_end=A_p_F+A2
+        kp1=A_p_F/(data[F_max,0]*data[Fmax,1]/1000)
+        kp2=A2/(data[F_max,0]*(kernel_A_end-data[Fmax,1])/1000)
+        kp_sum=A_p_end/(data[F_max,0]*kernel_A_end/1000)
+        k_a=A2/A_p_end
+    else:
+        data1 = np.copy(data)
+        data1[:,0] *= 1000
+        A_p=np.trapz(y=data1[:kernel_A,0],x=(data1[:kernel_A,1] / 100)) #Определение работы разрушения
+        A_p_F=np.trapz(y=data1[:Fmax,0],x=(data1[:Fmax,1] / 100))   # Определение работы до Fmax
+        # Работа поссле Fmax складывается из работы от точки Fmax до точки L cо слайдера и работы под прямой посчитаной от точки L до A_end.
+        #Массив Х есть срез искуственного массива которые считается в функции two_point_line_z
+        A2=np.trapz(y=data1[Fmax:kernel_L,0],x=(data1[Fmax:kernel_L,1]) / 100)+np.trapz(y=two_point_line_z(kernel_L, kernel_A_end),x=X/100)
+        A_p_end=A_p_F+A2
+        kp1=A_p_F/(data1[F_max,0]*data1[Fmax,1] / 100)
+        kp2=A2/(data1[F_max,0]*(kernel_A_end-data1[Fmax,1]) / 100)
+        kp_sum=A_p_end/(data1[F_max,0]*kernel_A_end / 100)
+        k_a=A2/A_p_end
     
     ser=[gran_d,h_ice, h, data[F_max, 0], data[Fmax, 1], A_p, A_p_F, A2, A_p_end, kp1, kp2, kp_sum, k_a]
     if Nag==False:
         ser+= [D, E, r1]
     Res_pd=pd.Series(ser)
-    Res_pd.to_excel(filename[0:-4]+'.xlsx', float_format="%.4f", index=False, header=False)
+    Res_pd.to_excel(filename[0:-4]+'.xlsx', float_format="%.6f", index=False, header=False)
 
     graph_axes.plot(data[:,1],data[:,0])
      #Строим диаграмму разрушения с отметками
-    graph_axes.set_xlabel('Прогиб w, миллиметры')
-    graph_axes.set_ylabel('Сила F, Ньютоны')
+    if gran_d == 0:
+        graph_axes.set_xlabel('Прогиб w, сантиметры')
+        graph_axes.set_ylabel('Сила F, КилоНьютоны') 
+    else:
+        graph_axes.set_xlabel('Прогиб w, миллиметры')
+        graph_axes.set_ylabel('Сила F, Ньютоны')
+        
     if gran_d!=0:
         graph_axes.set_title('Диаграмма разрушения ($\o_{гранул}$ = %g мм, $h_{пром}$ = %g мм)'%(gran_d,h_ice))
     else:
         graph_axes.set_title('Диаграмма разрушения $h_{пром}$ = %g мм'%(h_ice)) 
-    graph_axes.annotate('max F=%.4g Н, w=%.4g мм' %(data[F_max,0],data[Fmax,1]), xy=(data[F_max,1],data[F_max,0]),xytext=(data[F_max,1]-1,data[F_max,0]+.3), size=10)
+        
+    if gran_d != 0:
+        graph_axes.annotate('max F=%.4g Н, w=%.4g мм' %(data[F_max,0],data[Fmax,1]), xy=(data[F_max,1],data[F_max,0]),xytext=(data[F_max,1]-1,data[F_max,0]+.3), size=10)
+    else:
+        graph_axes.annotate('max F=%.4g кН, w=%.4g см' %(data[F_max,0],data[Fmax,1]), xy=(data[F_max,1],data[F_max,0]),xytext=(data[F_max,1]-1,data[F_max,0]+.3), size=10)
+    
     graph_axes.scatter(data[Fmax,1],data[Fmax,0],color='orange', s=30, marker='o')
     k_D=k_line(kernel) #Получаем коэффициент прямой упругой зоны
     graph_axes.plot((line(-0.6,k_D,0),line(data[Fmax,0]-(data[Fmax,0]/3),k_D,0)),(-0.6,data[Fmax,0]-(data[Fmax,0]/3)), linestyle = '--', linewidth=1, color = 'darkmagenta') #Строим прямую упругой части графика
@@ -201,13 +227,16 @@ def addPlot (graph_axes,kernel,kernel_1,kernel_A,kernel_A_end,kernel_Fmax,kernel
     graph_axes.plot([kernel_A_end,data[kernel_L,1]],[0,data[kernel_L,0]], linestyle = '--', linewidth=1, color = 'darkmagenta') #Строим прямую упругой части графика
     graph_axes.scatter(data[kernel_L,1],data[kernel_L,0],color='orange', s=30, marker='o')
     xy1=(data[kernel,1],data[kernel,0])
-    xytext1=(data[kernel,1]+0.25,data[kernel,0]-1.2)
+    xytext1=(data[kernel,1]+0.25,data[kernel,0]-.2)
 
     if Nag==False:
         graph_axes.annotate('$r_{0}$ = %.3g м\nD = %.5g Н/м\nE = 'r'$%.4g\times10^3$ МПа' %(r1,D,E/pow(10,9)), xy=xy1,xytext=xytext1,size=12) #Выводим значения D и E
-    graph_axes.text((data[Fmax,1]-2*(data[Fmax,1]/5)),(data[Fmax,0]/3),'$h_л$ = %.4g мм\n$A_р$ = %.4g Дж\n$A_{1} = %.4g$ Дж\n$A_{2} = %.4g$ Дж\n$A_{Σ} =%.4g$ Дж\n$k_{A1} = %.4g$\n$k_{A2} = %.4g$ \n$k_{AΣ} = %.4g$ \n$A_{2}/A_{Σ} = %.4g$ '%(h,A_p,A_p_F,A2,A_p_end,kp1,kp2,kp_sum,k_a),size=14)
+    
+    
+    graph_axes.text((data[Fmax,1]-2*(data[Fmax,1]/5)),(data[Fmax,0]/3),'$h_л$ = %.4g мм\n$A_р$ = %.5g Дж\n$A_{1} = %.5g$ Дж\n$A_{2} = %.5g$ Дж\n$A_{Σ} =%.5g$ Дж\n$k_{A1} = %.4g$\n$k_{A2} = %.4g$ \n$k_{AΣ} = %.4g$ \n$A_{2}/A_{Σ} = %.4g$ '%(h,A_p,A_p_F,A2,A_p_end,kp1,kp2,kp_sum,k_a),size=14)
     fig.savefig(filename[0:-4]+'.png')
     plt.draw()
+
 
 def interact_point(graph_axes,kernel,kernel_1,kernel_A,kernel_A_end,kernel_Fmax,kernel_L):
     """ Функция интерактивного взаимодействия с областью построения. Ничего не считает выводит только граффику"""
@@ -248,40 +277,17 @@ def onButtonClicked(event):
 def Change_slider(value):
     interact_point(graph_axes,kernel_S.val,kernel_1_S.val,kernel_A_S.val,kernel_A_end.val,kernel_Fmax.val,kernel_L.val)
 
-# создаем окно с графиком
-fig,graph_axes=plt.subplots()
-graph_axes.grid()
-
-# оставляем снизу графика место под виджеты
-fig.subplots_adjust(left=0.08,right=0.95, top= 0.97, bottom=0.2)
-# Создание переключателя для типа гранул
-axes_radiobuttons = plt.axes([-0.02, 0.6, 0.11, 0.11], frameon=False, aspect='equal' )# координаты left bottom width height
-radiobuttons= RadioButtons(axes_radiobuttons,['20 мм', '10 мм', '3 мм', 'Натурный лёд'], activecolor='black')
-radiobuttons.on_clicked(onRadioButtonsClicked)
-onRadioButtonsClicked(radiobuttons.value_selected)# вызов функции события при нажатии на кнопку
-# Создание переключателя для типа нагружения
-axes_radiobuttons_k = plt.axes([-0.02, 0.5, 0.11, 0.11], frameon=False, aspect='equal' )# координаты left bottom width height
-radiobuttons_k= RadioButtons(axes_radiobuttons_k,['Канал', 'Пролом'], activecolor='black')
-radiobuttons_k.on_clicked(onRadioButtonsClicked_k)
-onRadioButtonsClicked_k(radiobuttons_k.value_selected)
-
-# Создание кнопки "Пересчет"
-axes_button_add=plt.axes([0.35,0.02,0.1,0.04])# координаты left bottom width height
-button_add=Button(axes_button_add,'Пересчёт')
-button_add.on_clicked(onButtonClicked)
-
-#Создание слайдеров
-# координаты слайдеров
-ax_h=plt.axes([0.102,0.16,0.835,0.01])
-ax_kernel=plt.axes([0.102,0.14,0.375,0.01])
-ax_kernel_1=plt.axes([0.102,0.12,0.375,0.01])
-ax_kernel_A=plt.axes([0.102,0.1,0.375,0.01])
-ax_kernel_end=plt.axes([0.562,0.1,0.375,0.01])
-ax_kernel_F=plt.axes([0.562,0.14,0.375,0.01])
-ax_kernel_L=plt.axes([0.562,0.12,0.375,0.01])
-
 def sliders():
     global kernel_S,kernel_1_S, kernel_A_S,kernel_A_end,h_ice_S, kernel_Fmax,kernel_L
+    #Создание слайдеров
+    # координаты слайдеров
+    ax_h=plt.axes([0.102,0.16,0.835,0.01])
+    ax_kernel=plt.axes([0.102,0.14,0.375,0.01])
+    ax_kernel_1=plt.axes([0.102,0.12,0.375,0.01])
+    ax_kernel_A=plt.axes([0.102,0.1,0.375,0.01])
+    ax_kernel_end=plt.axes([0.562,0.1,0.375,0.01])
+    ax_kernel_F=plt.axes([0.562,0.14,0.375,0.01])
+    ax_kernel_L=plt.axes([0.562,0.12,0.375,0.01])
     kernel_S=Slider(ax_kernel,'Верхняя точка упр.зоны',1,int(len(data[:,0]-100)/3),valinit=501,valfmt='%10.0f')
     kernel_S.valtext.set_visible(False)
     kernel_1_S=(Slider(ax_kernel_1,'Нижняя точка упр.зоны',1,int(len(data[:,0]-100)/3),valinit=502,valfmt='%10.0f'))
@@ -294,9 +300,39 @@ def sliders():
     kernel_Fmax.valtext.set_visible(False)
     kernel_L=(Slider(ax_kernel_L,'Закрит. часть',int(F_max),int(len(data[:,0])),valinit=int(len(data[:,0])-1),valfmt='%10.0f'))
     kernel_L.valtext.set_visible(False)
-    h_ice_S=(Slider(ax_h,'Толщина проморозки',0,20,valinit=10,valfmt='%0.1f',color='red'))
+    h_ice_S=(Slider(ax_h,'Толщина проморозки',0,55,valinit=SET_VAL,valfmt='%0.01f',color='red'))
 
+puas=0.35 #Значение коэффициента Пуассона льда
+g=9.81 #Ускорение свободного падения
+ro=1000 #Плотность воды, кг/куб.м
+filename=askopenfilename()# Вызов окна открытия файла
+data=open_datafile(filename) #Открыть файл с данными диаграммы разрушени
+F_max=np.argmax(data[:, 0]) #индекс значения максимальной силы в массиве
+x_val=np.arange(data[F_max,1],5*data[F_max,1]+0.01,0.01)# массив для работы с закритической частью диаграммы
+# создаем окно с графиком
+fig,graph_axes=plt.subplots()
+graph_axes.grid()
+
+# оставляем снизу графика место под виджеты
+fig.subplots_adjust(left=0.08,right=0.95, top= 0.97, bottom=0.2)
+# Создание переключателя для типа гранул
 sliders()# Вызов слайдеров
+
+axes_radiobuttons = plt.axes([-0.02, 0.6, 0.11, 0.11], frameon=False, aspect='equal' )# координаты left bottom width height
+radiobuttons= RadioButtons(axes_radiobuttons,['20 мм', '10 мм', '3 мм', 'Натурный лёд'], activecolor='black')
+radiobuttons.on_clicked(onRadioButtonsClicked)
+onRadioButtonsClicked(radiobuttons.value_selected)# вызов функции события при нажатии на кнопку
+# Создание переключателя для типа нагружения
+axes_radiobuttons_k = plt.axes([-0.02, 0.5, 0.11, 0.11], frameon=False, aspect='equal' )# координаты left bottom width height
+radiobuttons_k= RadioButtons(axes_radiobuttons_k,['Канал', 'Пролом'], activecolor='black')
+radiobuttons_k.on_clicked(onRadioButtonsClicked_k)
+onRadioButtonsClicked_k(radiobuttons_k.value_selected)
+
+# Создание кнопки "Пересчет"
+axes_button_add=plt.axes([0.1,0.02,0.1,0.04])# координаты left bottom width height
+button_add=Button(axes_button_add,'Пересчёт')
+button_add.on_clicked(onButtonClicked)
+
 # При изменении значения ползунка вызывается функция с новым значением ползунка
 kernel_S.on_changed(Change_slider)
 kernel_1_S.on_changed(Change_slider)
