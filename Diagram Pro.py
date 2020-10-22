@@ -98,9 +98,6 @@ def onRadioButtonsClicked_k(label):
     Nag=dic_nag[label]
 
 
-'''Значения констант'''
-
-
 def two_point_line_z(arg_1, arg_2):
     """
     Функция построения прямой для продолжения закритической части
@@ -147,14 +144,19 @@ def addPlot (graph_axes,kernel,kernel_1,kernel_A_end,kernel_Fmax,kernel_L):
     kernel_L=int(kernel_L) #int необходим там где идет работа с конкретной величиной индекса в массиве данных
 
     data[:,1]=corect_w(data,two_point_line(kernel, kernel_1))  # коректировка перемещения и как следствие массива данных
+    F_arh()
     # лимиты отображения области
-    graph_axes.set_xlim([0,int(kernel_A_end+1)])  
+    graph_axes.set_xlim([data[0,1]-0.1,float(kernel_A_end+1)])  
     if data[F_max, 0] < 8:
-        graph_axes.set_ylim([0,int(data[F_max,0])+2])
+        graph_axes.set_ylim([0,float(data[F_max,0])+2])
+        if data[F_max, 0] < 4.5:
+            graph_axes.set_ylim([0,float(data[F_max,0])+0.5])
+        
     else:
-        graph_axes.set_ylim([0,int(data[F_max,0])+4])
-
-
+        graph_axes.set_ylim([0,float(data[F_max,0])+4])
+        if data[F_max, 0] > 100:
+            graph_axes.set_ylim([0,float(data[F_max,0])+10])
+        
     if Nag==False: # Работает только когда нагружение по схеме центральный пролом
         D=(pow(data[kernel,0]/(8*data[kernel,1]*0.001),2))/(ro*g) #Вычисление цилиндрической жёсткости ледяной пластины, Н/м
         E=(D*12*(1-pow(puas,2)))/pow(h/1000,3) #Вычисление модуля упругости, Па
@@ -209,9 +211,12 @@ def addPlot (graph_axes,kernel,kernel_1,kernel_A_end,kernel_Fmax,kernel_L):
         graph_axes.set_title('Диаграмма разрушения $h_{пром}$ = %g мм'%(h_ice)) 
         
     if gran_d != 0:
-        graph_axes.annotate('max F=%.4g Н, w=%.4g мм' %(data[F_max,0],data[Fmax,1]), xy=(data[F_max,1],data[F_max,0]),xytext=(data[F_max,1]-1,data[F_max,0]+.3), size=10)
+        if h_ice <= 3.6 and gran_d == 3:
+            graph_axes.annotate('max F=%.4g Н, w=%.4g мм' %(data[F_max,0],data[Fmax,1]), xy=(data[F_max,1],data[F_max,0]),xytext=(data[F_max,1]+.1,data[F_max,0]+.03), size=10)
+        else:
+            graph_axes.annotate('max F=%.4g Н, w=%.4g мм' %(data[F_max,0],data[Fmax,1]), xy=(data[F_max,1],data[F_max,0]),xytext=(data[F_max,1]+0.5,data[F_max,0]+.1), size=10)
     else:
-        graph_axes.annotate('max F=%.4g кН, w=%.4g см' %(data[F_max,0],data[Fmax,1]), xy=(data[F_max,1],data[F_max,0]),xytext=(data[F_max,1]-1,data[F_max,0]+.3), size=10)
+        graph_axes.annotate('max F=%.4g кН, w=%.4g см' %(data[F_max,0],data[Fmax,1]), xy=(data[F_max,1],data[F_max,0]),xytext=(data[F_max,1]+0.5,data[F_max,0]+.1), size=10)
     
     graph_axes.scatter(data[Fmax,1],data[Fmax,0],color='orange', s=30, marker='o')
     k_D=k_line(kernel) #Получаем коэффициент прямой упругой зоны
@@ -224,21 +229,22 @@ def addPlot (graph_axes,kernel,kernel_1,kernel_A_end,kernel_Fmax,kernel_L):
     #graph_axes.plot((data[kernel_A,1],data[kernel_A,1]),(data[kernel_A,0],0), linestyle = '--', linewidth=1, color = 'darkmagenta')
     graph_axes.plot([kernel_A_end,data[kernel_L,1]],[0,data[kernel_L,0]], linestyle = '--', linewidth=1, color = 'darkmagenta') #Строим прямую закритической части диаграммы
     graph_axes.scatter(data[kernel_L,1],data[kernel_L,0],color='orange', s=30, marker='o')
-    xy1=(data[kernel,1],data[kernel,0])
-    xytext1=(data[kernel,1]+0.25,data[kernel,0]-.2)
+    #xy1=(data[kernel,1],data[kernel,0])
+   # xytext1=(data[kernel,1]+0.25,data[kernel,0]-.2)
 
     if Nag==False:
-        graph_axes.annotate('$r_{0}$ = %.3g м\nD = %.5g Н/м\nE = 'r'$%.4g\times10^3$ МПа' %(r1,D,E/pow(10,9)), xy=xy1,xytext=xytext1,size=12) #Выводим значения D и E
+        fig.text(0.25,0.05,'$r_{0}$ = %.3g м\nD = %.5g Н/м\nE = 'r'$%.4g\times10^3$ МПа' %(r1,D,E/pow(10,9)),size=14) #Выводим значения D и E
     
     #здесь \n$A_р$ = %.5g Дж во 2 позицию и ,A_p
-    graph_axes.text((data[Fmax,1]-2*(data[Fmax,1]/5)),(data[Fmax,0]/3),'$h_л$ = %.4g мм\n$A_{1} = %.5g$ Дж\n$A_{2} = %.5g$ Дж\n$A_{Σ} =%.5g$ Дж\n$k_{A1} = %.4g$\n$k_{A2} = %.4g$ \n$k_{AΣ} = %.4g$ \n$A_{2}/A_{Σ} = %.4g$ '%(h,A_p_F,A2,A_p_end,kp1,kp2,kp_sum,k_a),size=14)
+    fig.text(0.4, 0.022, '$A_{1} = %.5g$ Дж\n$A_{2} = %.5g$ Дж\n$A_{Σ} =%.5g$ Дж\n$h_л =%.4g$ мм ' %(A_p_F,A2,A_p_end,h),size=14)
+    fig.text(0.5, 0.022, '$k_{A1} = %.4g$\n$k_{A2} = %.4g$ \n$k_{AΣ} = %.4g$ \n$A_{2}/A_{Σ} = %.4g$ ' %(kp1,kp2,kp_sum,k_a),size=14)
     fig.savefig(filename[0:-4]+'.png')
+    
     plt.draw()
 
 # добавить ,kernel_A если возвращать работу разрушения на 4 позицию здесь
 def interact_point(graph_axes,kernel,kernel_1,kernel_A_end,kernel_Fmax,kernel_L):
     """ Функция интерактивного взаимодействия с областью построения. Ничего не считает выводит только граффику"""
-
     graph_axes.clear()
     graph_axes.grid()
 
@@ -258,7 +264,6 @@ def interact_point(graph_axes,kernel,kernel_1,kernel_A_end,kernel_Fmax,kernel_L)
     graph_axes.plot((data[kernel_Fmax,1],data[kernel_Fmax,1]),(data[kernel_Fmax,0],0), linestyle = '--', linewidth=1, color = 'darkmagenta')
     graph_axes.plot([kernel_A_end,data[kernel_L,1]],[0,data[kernel_L,0]], linestyle = '--', linewidth=1, color = 'darkmagenta') #Строим прямую упругой части графика
     graph_axes.scatter(data[kernel_L,1],data[kernel_L,0],color='orange', s=30, marker='o')
-
     plt.draw()
     
     
@@ -307,7 +312,6 @@ def h_of_ice():
     h_ice=input()
     try:
         h_ice = float(h_ice)
-    
     except:
         try:
             h_list=h_ice.split(',')
@@ -317,7 +321,30 @@ def h_of_ice():
             h_list=h_ice.split('/')
             h_ice=h_list[0] + '.' + h_list[1]
             h_ice=float(h_ice) 
+            
+
+def F_arh():
+    from math import pi
+    height_of_stamp = 0.015 # высота штампа
+    diametr = 0.05 #метры
+    S = (pi*diametr**2) / 4
+    if Nag == False:
+        data[F_max+1, 0] - ro * S * height_of_stamp #V*ro
+    else:
+        index = (np.abs(data[:, 1] - h_ice)).argmin() # ищем индекс точки касания штампа воды
+        #в массиве данных перемещения
+        if data[index, 1] < h_ice:
+            index += 1
+        index2 = (np.abs(data[:, 1] - (h_ice + height_of_stamp))).argmin()# ищем индекс точки полного 
+        #погружения штампа в воду в массиве данных перемещения
+        
+        if data[index2, 1] < (h_ice + height_of_stamp):
+            index2 += 1
+        data[index:index2, 0]  -= ro * S * (data[index:index2, 1] - h_ice)
+        data[index2:, 0] -= height_of_stamp * ro * S
        
+       # ro*h*0.03927 #ro*h*S 
+        
 puas=0.35 #Значение коэффициента Пуассона льда
 g=9.81 #Ускорение свободного падения
 ro=1000 #Плотность воды, кг/куб.м

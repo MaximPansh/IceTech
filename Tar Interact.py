@@ -10,9 +10,9 @@ import pandas as pd
 import numpy as np
 import scipy as sp
 import scipy.signal
-from tkinter.filedialog import asksaveasfilename
 from tkinter.filedialog import askopenfilename
-from matplotlib.widgets import Button, Slider
+from matplotlib.widgets import Button, Slider, RadioButtons
+#from tkinter.filedialog import asksaveasfilename
 
 def open_datafile(path,a=1,b=20000000):
     """
@@ -27,8 +27,15 @@ def open_datafile(path,a=1,b=20000000):
     data=np.array(data.values)    #перевод значений в массив Numpy
     return data[a:(b+1)]
 
+def onRadioButtonsClicked(label):
+    """
+    Обработчик события при клике по типу датчика
+    """
+    global F_k
+    dic_F_k = {'2 кг' : 95.824,'3 кг': -107.3, '5 кг': -195.57, '10 кг': -172.41}
+    return dic_F_k[label]
 
-def tar_F(V, null_point=0, k=-106.897):
+def tar_F(V, null_point=0, k = 1):
     """
     Преобразование показаний датчика силы (Вольты в Ньютоны)
     Тарировочное уравнение вида F(V)=kV+b
@@ -36,9 +43,12 @@ def tar_F(V, null_point=0, k=-106.897):
     b вычисляется таким образом, чтобы начальная точка переместилась в ноль
     Возвращает F(массив)
     2 кг = 95.824
-    5кг=-195.57
+    3кг = -107,3
+    5кг маленький=-195.57
+    10кг=-172,41
     улица -571.2
     """
+    k = onRadioButtonsClicked(radiobuttons.value_selected)
     b=-k*V[null_point]
     
     return np.array(k*V+b)#тарировочное уравнение
@@ -168,8 +178,9 @@ def plot_destract(graph_axes):
 
 
 def onButtonClicked_save(event):
-        filename=asksaveasfilename(defaultextension=".txt",filetypes=(("Текстовый файл",".txt"),("All Files","*.*")))
-        np.savetxt(fname=filename,X=data_mod) #сохранение обработанных данных диаграммы разрушения     
+        np.savetxt(data_file[0:-4]+'_Результаты.txt',data_mod)    
+        #filename=asksaveasfilename(defaultextension=".txt",filetypes=(("Текстовый файл",".txt"),("All Files","*.*")))
+        #np.savetxt(fname=filename,X=data_mod) #сохранение обработанных данных диаграммы разрушения     
 
 
 def onButtonClicked_сalc(event):
@@ -259,7 +270,13 @@ def add_figets():
     axes_button_wtar=plt.axes([0.712,0.02,0.15,0.075])# координаты
     global button_wtar
     button_wtar=Button(axes_button_wtar,'Истиное перемещение')
-
+    
+    # Создание переключателя для типа датчика
+    global radiobuttons
+    axes_radiobuttons = plt.axes([-0.02, 0.5, 0.11, 0.11], frameon=False, aspect='equal')# координаты left bottom width height
+    radiobuttons= RadioButtons(axes_radiobuttons,['2 кг', '3 кг', '5 кг', '10 кг'], activecolor='black', active = 2)
+    onRadioButtonsClicked(radiobuttons.value_selected)
+    radiobuttons.on_clicked(onRadioButtonsClicked)
     #Создание слайдеров
      # координаты слайдеров
     ax_L=plt.axes([0.07,0.11,0.85,0.01]) 
@@ -292,6 +309,7 @@ button_add_4.on_clicked(onButtonClicked_Diag)
 button_save.on_clicked(onButtonClicked_save)# вызов функции события при нажатии на кнопку 
 button_Ftar.on_clicked(onButtonClicked_Ftar)# вызов функции события при нажатии на кнопку 
 button_wtar.on_clicked(onButtonClicked_wtar)# вызов функции события при нажатии на кнопку 
+
 f_s.on_changed(Change_slider)
 l_s.on_changed(Change_slider)
 r_s.on_changed(Change_slider)
