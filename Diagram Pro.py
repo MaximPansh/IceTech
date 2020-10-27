@@ -4,6 +4,8 @@ import numpy as np
 import pandas as pd
 from matplotlib.widgets import Button, Slider, RadioButtons
 from tkinter.filedialog import askopenfilename
+F_1 = 1
+W_1 = 1
 
 def open_datafile(path,a=1,b=20000000):
     """
@@ -16,7 +18,7 @@ def open_datafile(path,a=1,b=20000000):
         file= open(path,encoding= 'ansi')#перекодировка из utf-8 в ansi из за странной ошибки в спайдере
         data=pd.read_csv(file,sep='\s+' ,decimal="." )
         data=np.array(data.values)    #перевод значений в массив Numpy
-        float(data[20,0])
+        float(data[-5,0])
         
     except ValueError:
         file= open(path,encoding= 'ansi')#перекодировка из utf-8 в ansi из за странной ошибки в спайдере
@@ -134,6 +136,7 @@ def addPlot (graph_axes,kernel,kernel_1,kernel_A_end,kernel_Fmax,kernel_L):
     #h_ice=round(h_ice_S.val, 2) #Толщина промороженного слоя округление до 1 знака после запятой
     if gran_d!=0: 
         h=round(onelayer_h(h_ice,gran_d),1) # нахождение приведенной толщины льда и её округление
+       
     else:
         h=h_ice
     kernel=int(kernel)
@@ -144,18 +147,23 @@ def addPlot (graph_axes,kernel,kernel_1,kernel_A_end,kernel_Fmax,kernel_L):
     kernel_L=int(kernel_L) #int необходим там где идет работа с конкретной величиной индекса в массиве данных
 
     data[:,1]=corect_w(data,two_point_line(kernel, kernel_1))  # коректировка перемещения и как следствие массива данных
-    F_arh()
+    if gran_d != 0:
+        F_arh()
     # лимиты отображения области
-    graph_axes.set_xlim([data[0,1]-0.1,float(kernel_A_end+1)])  
+    graph_axes.set_xlim([data[0,1]-0.2,float(kernel_A_end+1)])  
     if data[F_max, 0] < 8:
-        graph_axes.set_ylim([0,float(data[F_max,0])+2])
+        graph_axes.set_ylim([0,float(data[F_max,0])+1])
         if data[F_max, 0] < 4.5:
             graph_axes.set_ylim([0,float(data[F_max,0])+0.5])
+            if  data[F_max, 0] < 1:
+                graph_axes.set_ylim([0,float(data[F_max,0])+0.1])
         
     else:
         graph_axes.set_ylim([0,float(data[F_max,0])+4])
         if data[F_max, 0] > 100:
             graph_axes.set_ylim([0,float(data[F_max,0])+10])
+            if data[F_max, 0] > 800:
+                graph_axes.set_ylim([0,float(data[F_max,0])+100])
         
     if Nag==False: # Работает только когда нагружение по схеме центральный пролом
         D=(pow(data[kernel,0]/(8*data[kernel,1]*0.001),2))/(ro*g) #Вычисление цилиндрической жёсткости ледяной пластины, Н/м
@@ -163,7 +171,7 @@ def addPlot (graph_axes,kernel,kernel_1,kernel_A_end,kernel_Fmax,kernel_L):
         r1=1/((ro*g/D)**0.25)# вычисление линейного размера пластины, м
         if gran_d == 0:
             D=(pow((1000 * data[kernel,0]) / (8 * data[kernel,1] * 0.01), 2))/(ro * g)
-            E=(D*12*(1-pow(puas,2)))/pow(h/1000,3)
+            E=(D*12*(1-pow(puas,2)))/pow(h/100,3)
             r1=1/((ro*g/D)**0.25)
     if gran_d != 0:
 #        A_p=np.trapz(y=data[:kernel_A,0],x=(data[:kernel_A,1]/1000)) #Определение работы разрушения
@@ -190,7 +198,10 @@ def addPlot (graph_axes,kernel,kernel_1,kernel_A_end,kernel_Fmax,kernel_L):
         kp_sum=A_p_end/(data1[F_max,0]*kernel_A_end / 100)
         k_a=A2/A_p_end
     #здесь , A_p
-    ser=[gran_d,h_ice, h, data[F_max, 0], data[Fmax, 1], A_p_F, A2, A_p_end, kp1, kp2, kp_sum, k_a]#Добавить работу разрушения здесь
+    if gran_d == 0:
+        ser=[filename[-6:-4],gran_d, h, data[F_max, 0], data[Fmax, 1], A_p_F, A2, A_p_end, kp1, kp2, kp_sum, k_a]#Добавить работу разрушения здесь
+    else:
+        ser=[gran_d,h_ice, h, data[F_max, 0], data[Fmax, 1], A_p_F, A2, A_p_end, kp1, kp2, kp_sum, k_a]#Добавить работу разрушения здесь
     if Nag==False:
         ser+= [D, E, r1]
     Res_pd=pd.Series(ser)
@@ -208,7 +219,7 @@ def addPlot (graph_axes,kernel,kernel_1,kernel_A_end,kernel_Fmax,kernel_L):
     if gran_d!=0:
         graph_axes.set_title('Диаграмма разрушения ($\o_{гранул}$ = %g мм, $h_{пром}$ = %g мм)'%(gran_d,h_ice))
     else:
-        graph_axes.set_title('Диаграмма разрушения $h_{пром}$ = %g мм'%(h_ice)) 
+        graph_axes.set_title('Диаграмма разрушения')#' $h_{пром}$ = %g мм'%(h_ice)) 
         
     if gran_d != 0:
         if h_ice <= 3.6 and gran_d == 3:
@@ -216,7 +227,11 @@ def addPlot (graph_axes,kernel,kernel_1,kernel_A_end,kernel_Fmax,kernel_L):
         else:
             graph_axes.annotate('max F=%.4g Н, w=%.4g мм' %(data[F_max,0],data[Fmax,1]), xy=(data[F_max,1],data[F_max,0]),xytext=(data[F_max,1]+0.5,data[F_max,0]+.1), size=10)
     else:
-        graph_axes.annotate('max F=%.4g кН, w=%.4g см' %(data[F_max,0],data[Fmax,1]), xy=(data[F_max,1],data[F_max,0]),xytext=(data[F_max,1]+0.5,data[F_max,0]+.1), size=10)
+        if  data[F_max, 0] < 1:
+            graph_axes.annotate('max F=%.4g кН, w=%.4g см' %(data[F_max,0],data[Fmax,1]), xy=(data[F_max,1],data[F_max,0]),xytext=(data[F_max,1]+0.05,data[F_max,0]+.05), size=10)
+
+        else:
+            graph_axes.annotate('max F=%.4g кН, w=%.4g см' %(data[F_max,0],data[Fmax,1]), xy=(data[F_max,1],data[F_max,0]),xytext=(data[F_max,1]+0.5,data[F_max,0]+.1), size=10)
     
     graph_axes.scatter(data[Fmax,1],data[Fmax,0],color='orange', s=30, marker='o')
     k_D=k_line(kernel) #Получаем коэффициент прямой упругой зоны
@@ -236,7 +251,7 @@ def addPlot (graph_axes,kernel,kernel_1,kernel_A_end,kernel_Fmax,kernel_L):
         fig.text(0.25,0.05,'$r_{0}$ = %.3g м\nD = %.5g Н/м\nE = 'r'$%.4g\times10^3$ МПа' %(r1,D,E/pow(10,9)),size=14) #Выводим значения D и E
     
     #здесь \n$A_р$ = %.5g Дж во 2 позицию и ,A_p
-    fig.text(0.4, 0.022, '$A_{1} = %.5g$ Дж\n$A_{2} = %.5g$ Дж\n$A_{Σ} =%.5g$ Дж\n$h_л =%.4g$ мм ' %(A_p_F,A2,A_p_end,h),size=14)
+    fig.text(0.4, 0.022, '$A_{1} = %.5g$ Дж\n$A_{2} = %.5g$ Дж\n$A_{Σ} =%.5g$ Дж\n$h_л =%.4g$ cм ' %(A_p_F,A2,A_p_end,h),size=14)
     fig.text(0.5, 0.022, '$k_{A1} = %.4g$\n$k_{A2} = %.4g$ \n$k_{AΣ} = %.4g$ \n$A_{2}/A_{Σ} = %.4g$ ' %(kp1,kp2,kp_sum,k_a),size=14)
     fig.savefig(filename[0:-4]+'.png')
     
@@ -274,8 +289,10 @@ def onButtonClicked(event):
     graph_axes = fig.add_subplot(111)
     graph_axes.grid()
     #Если возвращать работу разрушения - добавить сюда 4 переменной ,kernel_A_S.val здесь
-    addPlot(graph_axes,kernel_S.val,kernel_1_S.val,kernel_A_end.val,kernel_Fmax.val,kernel_L.val)    
-    np.savetxt(filename[0:-4]+'_new.txt',data)#сохранение файла в то же место но с новым именем для будущих нужд
+    addPlot(graph_axes,kernel_S.val,kernel_1_S.val,kernel_A_end.val,kernel_Fmax.val,kernel_L.val) 
+    A = np.array([[0,0],[0,0]])
+    A = np.vstack((A,data))
+    np.savetxt(filename[0:-4]+'_new.txt',A)#сохранение файла в то же место но с новым именем для будущих нужд
     
 def Change_slider(value):
      #Если возвращать работу разрушения - добавить сюда 4 переменной ,kernel_A_S.val здесь
@@ -350,9 +367,12 @@ g=9.81 #Ускорение свободного падения
 ro=1000 #Плотность воды, кг/куб.м
 filename=askopenfilename()# Вызов окна открытия файла
 data=open_datafile(filename) #Открыть файл с данными диаграммы разрушени
+data = np.vstack((np.array([[0,0],[0,0]]),data))
+data[:,0] *= F_1
+data[:, 1] *=W_1
 h_of_ice()
 F_max=np.argmax(data[:, 0]) #индекс значения максимальной силы в массиве
-x_val=np.arange(data[F_max,1],5*data[F_max,1]+0.01,0.01)# массив для работы с закритической частью диаграммы
+x_val=np.arange(data[F_max,1],10*data[F_max,1]+0.01,0.01)# массив для работы с закритической частью диаграммы
 # создаем окно с графиком
 fig,graph_axes=plt.subplots()
 graph_axes.grid()
@@ -361,14 +381,21 @@ graph_axes.grid()
 fig.subplots_adjust(left=0.08,right=0.95, top= 0.97, bottom=0.2)
 # Создание переключателя для типа гранул
 sliders()# Вызов слайдеров
-
 axes_radiobuttons = plt.axes([-0.02, 0.6, 0.11, 0.11], frameon=False, aspect='equal' )# координаты left bottom width height
-radiobuttons= RadioButtons(axes_radiobuttons,['20 мм', '10 мм', '3 мм', 'Натурный лёд'], activecolor='black')
+radiobuttons= RadioButtons(axes_radiobuttons,['20 мм', '10 мм', '3 мм', 'Натурный лёд'], activecolor='black',active = 2)
 radiobuttons.on_clicked(onRadioButtonsClicked)
 onRadioButtonsClicked(radiobuttons.value_selected)# вызов функции события при нажатии на кнопку
 # Создание переключателя для типа нагружения
+
+for i in filename.split('/')[-1]:
+    if i == 'П' or i =='P' or  i =='Ц' or  i == "ЦП":
+        act_nag = 1
+        break
+    else:
+        act_nag = 0
+
 axes_radiobuttons_k = plt.axes([-0.02, 0.5, 0.11, 0.11], frameon=False, aspect='equal' )# координаты left bottom width height
-radiobuttons_k= RadioButtons(axes_radiobuttons_k,['Канал', 'Пролом'], activecolor='black')
+radiobuttons_k= RadioButtons(axes_radiobuttons_k,['Канал', 'Пролом'], activecolor='black', active = act_nag)
 radiobuttons_k.on_clicked(onRadioButtonsClicked_k)
 onRadioButtonsClicked_k(radiobuttons_k.value_selected)
 
@@ -384,5 +411,6 @@ kernel_1_S.on_changed(Change_slider)
 kernel_A_end.on_changed(Change_slider)
 kernel_Fmax.on_changed(Change_slider)
 kernel_L.on_changed(Change_slider)
-
+figManager = plt.get_current_fig_manager()
+figManager.window.showMaximized()
 plt.show()

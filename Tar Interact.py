@@ -93,28 +93,30 @@ def butter_lowpass_filtfilt(data, normal_cutoff, order=5):
     return sp.signal.filtfilt(b, a, data)
 
 
-def calculate_tar (l,r,bat,med,f_p):
+def calculate_tar (l, r, bat, med, f_p, bat_w):
     l=int(l)
     r=int(r)
     bat=float(bat)
+    bat_w=float(bat_w)
     med=round(int(med),0)
     f_p=round(int(f_p),0)
-    global F_median, data_filt, data, data_mod, i, data_start, med_old, bat_old, l_old, r_old, filt_old
+    global F_median, data_filt, data, data_mod, i, data_start, med_old, bat_old, l_old, r_old, filt_old, bat_old_w
 
     if med % 2==0:
         med=med+1
 
     if i==0:
-        med_old=med
-        bat_old=bat 
+        med_old = med
+        bat_old = bat 
+        bat_old_w = bat_w
         i=1
 
     data=data1[l:r]
-    if i==1 or med_old!=med or bat!=bat_old:
+    if i==1 or med_old!=med or bat!=bat_old or bat_w != bat_old_w:
         #Прогоняем показания датчика силы через медианный фильтр
         F_median=dig_noise(data[:,1],med) 
         #Прогоняем показания датчиков силы и перемещения через низкочастотный фильтр Баттерворта
-        data_filt=np.column_stack((data[:,0],butter_lowpass_filtfilt(F_median, bat),butter_lowpass_filtfilt(data[:,2], bat)))
+        data_filt=np.column_stack((data[:,0],butter_lowpass_filtfilt(F_median, bat),butter_lowpass_filtfilt(data[:,2], bat_w)))
         data_mod=np.column_stack((tar_F(data_filt[:,1],null_point=f_p),tar_w(data_filt[:,2],null_point=0))) #Переводим Вольты в Ньютоны и миллиметры
         if i==1:
             filt_old=np.copy(data_filt)
@@ -184,9 +186,9 @@ def onButtonClicked_save(event):
 
 
 def onButtonClicked_сalc(event):
-    global l_s, r_s, bat_s, med_s, f_s, graph_axes
+    global l_s, r_s, bat_s, med_s, f_s, graph_axes, bat_s_w
 
-    calculate_tar(l_s.val,r_s.val,bat_s.val,med_s.val,f_s.val) 
+    calculate_tar(l_s.val,r_s.val,bat_s.val,med_s.val,f_s.val, bat_s_w.val) 
     plot_F(graph_axes)   
 
 
@@ -208,7 +210,7 @@ def onButtonClicked_Ftar(event):
 
 def onButtonClicked_wtar(event):
     plot_w_tar(graph_axes)
-
+    
 
 def interact_point (graph_axes,f_p,l,r):
     f_p=int(f_p)
@@ -241,62 +243,78 @@ def add_figets():
     fig.subplots_adjust(left=0.07,right=0.95, top= 0.97, bottom=0.29)
 
         # Создание кнопки "Пересчет"
-    axes_button_add_1=plt.axes([0.1,0.02,0.1,0.075])# координаты
+    axes_button_add_1=plt.axes([0.1,0.02,0.1,0.045])# координаты
     global button_add_1
     button_add_1=Button(axes_button_add_1,'Пересчёт')
 
             # Создание кнопки "Перемещение"
-    axes_button_add_2=plt.axes([0.508,0.02,0.1,0.075])# координаты
+    axes_button_add_2=plt.axes([0.508,0.02,0.1,0.045])# координаты
     global button_add_2
     button_add_2=Button(axes_button_add_2,'Перемещение')
 
             # Создание кнопки "Cила"
-    axes_button_add_3=plt.axes([0.406,0.02,0.1,0.075])# координаты
+    axes_button_add_3=plt.axes([0.406,0.02,0.1,0.045])# координаты
     global button_add_3
     button_add_3=Button(axes_button_add_3,'Сила')
             # Создание кнопки "Диаграмма"
-    axes_button_add_4=plt.axes([0.304,0.02,0.1,0.075])# координаты
+    axes_button_add_4=plt.axes([0.304,0.02,0.1,0.045])# координаты
     global button_add_4
     button_add_4=Button(axes_button_add_4,'Диаграмма')
         # Создание кнопки "Сохранить"
-    axes_button_save=plt.axes([0.202,0.02,0.1,0.075])# координаты
+    axes_button_save=plt.axes([0.202,0.02,0.1,0.045])# координаты
     global button_save
     button_save=Button(axes_button_save,'Cохранить')
 
-    axes_button_Ftar=plt.axes([0.61,0.02,0.1,0.075])# координаты
+    axes_button_Ftar=plt.axes([0.61,0.02,0.1,0.045])# координаты
     global button_Ftar
     button_Ftar=Button(axes_button_Ftar,'Истиная сила')
 
-    axes_button_wtar=plt.axes([0.712,0.02,0.15,0.075])# координаты
+    axes_button_wtar=plt.axes([0.712,0.02,0.15,0.045])# координаты
     global button_wtar
     button_wtar=Button(axes_button_wtar,'Истиное перемещение')
     
     # Создание переключателя для типа датчика
     global radiobuttons
+    
+    for i in data_file.split('/')[-2].split(' ')[-1]:
+        if i == '2':
+            act_sensor = 0
+            break
+        elif i == '3':
+            act_sensor = 1
+            break
+        elif i == '5':
+            act_sensor = 2
+            break
+        else:
+            act_sensor = 3
+
     axes_radiobuttons = plt.axes([-0.02, 0.5, 0.11, 0.11], frameon=False, aspect='equal')# координаты left bottom width height
-    radiobuttons= RadioButtons(axes_radiobuttons,['2 кг', '3 кг', '5 кг', '10 кг'], activecolor='black', active = 2)
+    radiobuttons= RadioButtons(axes_radiobuttons,['2 кг', '3 кг', '5 кг', '10 кг'], activecolor='black', active = act_sensor)
     onRadioButtonsClicked(radiobuttons.value_selected)
     radiobuttons.on_clicked(onRadioButtonsClicked)
     #Создание слайдеров
      # координаты слайдеров
-    ax_L=plt.axes([0.07,0.11,0.85,0.01]) 
-    ax_R=plt.axes([0.07,0.14,0.85,0.01])
+    ax_L=plt.axes([0.07,0.08,0.85,0.01]) 
+    ax_R=plt.axes([0.07,0.11,0.85,0.01])
     ax_bat=plt.axes([0.07,0.17,0.85,0.01])
     ax_med=plt.axes([0.07,0.2,0.85,0.01])
     ax_f_p=plt.axes([0.07,0.23,0.85,0.01])
+    ax_bat_w = plt.axes([0.07,0.14,0.85,0.01])# координаты left bottom width height
     # Вызов слайдеров 
-    global l_s, r_s, bat_s, med_s, f_s
+    global l_s, r_s, bat_s, med_s, f_s, bat_s_w
 
     l_s=Slider(ax_L,'Левая точка',1,int(len(data[:,0]-100)),valinit=10501,valfmt='%1.0f',)
     r_s=Slider(ax_R,'Правая точка',1,int(len(data[:,0]-100)),valinit=int(len(data[:,0]-10000)),valfmt='%1.0f')
-    bat_s=(Slider(ax_bat,' Баттерворт',0.001,0.02,valinit=0.0055,valfmt='%1.3f'))
+    bat_s=(Slider(ax_bat,' Баттерворт F',0.001,0.02,valinit=0.0055,valfmt='%1.4f'))
     med_s=(Slider(ax_med,' Медианный',101,2001,valinit=501,valfmt='%1.0f'))
     f_s=(Slider(ax_f_p,'Ноль Силы',1,int(len(data[:,0]-100)),valinit=1000,valfmt='%1.0f'))
+    bat_s_w=(Slider(ax_bat_w,' Баттерворт W',0.001,0.02,valinit=0.0052,valfmt='%1.4f'))
 
 def start():
     global i
     i=0
-    calculate_tar(l_s.val,r_s.val,bat_s.val,med_s.val,f_s.val) 
+    calculate_tar(l_s.val,r_s.val,bat_s.val,med_s.val,f_s.val, bat_s_w.val) 
     plot_F(graph_axes)  
 data_file=askopenfilename()  
 data1=open_datafile(data_file)  
@@ -313,4 +331,6 @@ button_wtar.on_clicked(onButtonClicked_wtar)# вызов функции собы
 f_s.on_changed(Change_slider)
 l_s.on_changed(Change_slider)
 r_s.on_changed(Change_slider)
+figManager = plt.get_current_fig_manager()
+figManager.window.showMaximized()
 plt.show()

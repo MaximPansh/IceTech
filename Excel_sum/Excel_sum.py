@@ -10,6 +10,7 @@ from tkinter.filedialog import askopenfilename
 folder =  askopenfilename() #папка с файлами
 folder = os.path.dirname(folder) #Переход к директории выше чем выбранный файл
 files = os.listdir(folder) #формируем список путей к файлам
+print('files=',files,'/n folder=',folder )
 
 all_file_frames = [] #сюда будем добавлять прочитанную таблицу
 ind=['gran_d' ,'hice', 'h', 'Fmax', 'Wmax',
