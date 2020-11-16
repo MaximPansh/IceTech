@@ -19,6 +19,7 @@ def open_datafile(path,a=1,b=20000000):
         data=pd.read_csv(file,sep='\s+' ,decimal="." )
         data=np.array(data.values)    #перевод значений в массив Numpy
         float(data[-5,0])
+        float(data[-10,0])
         
     except ValueError:
         file= open(path,encoding= 'ansi')#перекодировка из utf-8 в ansi из за странной ошибки в спайдере
@@ -67,10 +68,12 @@ def two_point_line (arg_1, arg_2):
     Запращивает аргументы двух точек
     Возвращает значение X на этой прямой когда Y равно нулю
     """
+    print(arg_1, arg_2)
     x1=data[arg_1, 1]
     y1=data[arg_1, 0]
     x2=data[arg_2, 1]
     y2=data[arg_2, 0]
+    print((((0-y1)*(x2-x1))/(y2-y1))+x1)
     return (((0-y1)*(x2-x1))/(y2-y1))+x1
 
 
@@ -80,6 +83,7 @@ def corect_w(data, w):
     Запрашивает: массив данных, корректировочное значение
     Возвращает откорректированный массив
     """
+    print('Corect')
     return data[:, 1]-w
 
 def onRadioButtonsClicked(label):
@@ -115,7 +119,6 @@ def two_point_line_z(arg_1, arg_2):
     # сравнение аргументов с массивом и нахождение индекса точки в исскуственном массиве
     index = (np.abs(x_val-x1)).argmin()
     index2= (np.abs(x_val-arg_2)).argmin()
-
     y1=data[arg_1, 0]
     if index<index2:
         X=x_val[index:index2]
@@ -145,8 +148,9 @@ def addPlot (graph_axes,kernel,kernel_1,kernel_A_end,kernel_Fmax,kernel_L):
     kernel_A_end=float(kernel_A_end)-two_point_line(kernel, kernel_1)# Можно использовать float т.к. далее это число используется только в исскуственным массивом
     Fmax=int(kernel_Fmax)
     kernel_L=int(kernel_L) #int необходим там где идет работа с конкретной величиной индекса в массиве данных
-
+    print(data[:,1])
     data[:,1]=corect_w(data,two_point_line(kernel, kernel_1))  # коректировка перемещения и как следствие массива данных
+    print(data[:,1])
     if gran_d != 0:
         F_arh()
     # лимиты отображения области
