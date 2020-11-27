@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from math import pi
-from numpy import array
 """
 Вычисление характеристик композитного льда
 """
@@ -19,7 +18,9 @@ def onelayer_h (h, d, ro_b=0.919, ro_w=1):
     h_upseg=((2-1j*pow(3,0.5)*(A-pow(A,-1))-(A+pow(A,-1)))/2).real*R
 
     def compare(h):
+        print(h+h_upseg)
         if (h+h_upseg)<d:#Если без переморозки
+            print('here')
             h_dowseg=d-h_upseg-h  #Расчёт высоты, на которую шарик торчит вниз под нижней поверхностью льда
             V_dowseg=pi*pow(h_dowseg,2)*(R-h_dowseg/3)  #Объём сегмента шарика, торчащий под поверхностью льда
             h_cond1=h+(V_upseg+V_dowseg)/(2*S)   #Приведённая толщина

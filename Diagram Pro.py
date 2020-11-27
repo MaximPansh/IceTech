@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 from matplotlib.widgets import Button, Slider, RadioButtons
 from tkinter.filedialog import askopenfilename
+from GP_ice import onelayer_h
 F_1 = 1
 W_1 = 1
 
@@ -31,16 +32,6 @@ def open_datafile(path,a=1,b=20000000):
     file.close()
     return data[a:(b+1)]
 
-
-def onelayer_h (h,d):
-    """
-    Вычисляет приведённую толщину 1-слойного композитного ледяного покрова без переморозки
-    Запрашивает толщину проморозки h, диаметр шариков d
-    Возвращает приведённую толщину льда
-    """
-    R=d/2
-    pi=3.1416
-    return h+0.3333*pi*R-0.1442*pi*h-((0.1626*pi*pow(h,2))/R)+((0.0833*pi*pow(h,3))/pow(R,2))
 
 
 def k_line(x2_arg):
