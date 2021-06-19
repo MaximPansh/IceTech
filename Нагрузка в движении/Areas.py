@@ -84,12 +84,12 @@ ax1 = fig.add_subplot(2,2,1)
 
 Xmaj = 0.2
 ENG = 0
-dep = 2.971
-hump = 0.094
-zero = 0.015
+dep = 1.98
+hump = 0.064
+zero = 0
 
 
-plt.gca().yaxis.set_major_locator(mtick.MultipleLocator(0.5))
+plt.gca().yaxis.set_major_locator(mtick.MultipleLocator(2))
 plt.gca().xaxis.set_minor_locator(mtick.MultipleLocator(Xmaj/2))
 plt.gca().xaxis.set_major_locator(mtick.MultipleLocator(Xmaj))
 
@@ -113,9 +113,9 @@ if ENG == True:
 else:
     ax1.scatter(x, y, s=55, c=color1, label = "Площадь впадины, $A_{вп}$ ")
     ax1.scatter(zero,dep, s=85, c = color1, marker = "X")
-    ax1.scatter(x, y2, s = 55, c=color2, label = "Площадь горба, $A_{гор}$")
+    ax1.scatter(x, y2, s = 55, c=color2, label = "Площадь выгиба, $A_{гор}$")
     ax1.scatter(zero,hump, s=85, c = color2, marker = "X")
-#plt.grid()
+plt.grid()
 
 
 ax2 = fig.add_subplot(2,2,2)
@@ -128,7 +128,7 @@ plt.gca().yaxis.set_major_locator(mtick.MultipleLocator(5))
 
 
 ax2.set_xlim(0, data[np.argmax(data[:,0]),0]*1.1)
-ax2.set_ylim(0, data[np.argmax(data[:,3]),3]*1.1)
+ax2.set_ylim(0, 35)
 if ENG == False:
     ax2.set_ylabel('Отношение площадей, $A_{вп}$/$A_{гор}$')
     ax2.set_xlabel('Скорость, м\с')
@@ -139,12 +139,17 @@ else:
     ax2.set_xlabel('Velocity, m\s')
     ax2.scatter(x, y3, s = 55, c=color3, label = "Area ratio, $A_{hump}$/$A_{dep}$")
     ax2.scatter(zero,dep/hump,s = 85, c=color3, marker = "X")
-#plt.grid()
+plt.grid()
 
 
 #ax1.plot(coef(x,y), label = str("%.3f" %float(kk)) + "x+" + str("%.3f" %float(bb)) )
 #ax1.plot(coef(x,y2), label = str("%.3f" %float(kk)) + "x+" + str("%.3f" %float(bb)) )
-ax1.legend(prop={'size':12})
 
+ax1.legend(loc = 'lower center',
+           mode = 'expand',
+           borderaxespad = 0,
+           bbox_to_anchor=(0.5,-0.4),
+           ncol = 9
+           )
 
 plt.show()

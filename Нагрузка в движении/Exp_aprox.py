@@ -51,6 +51,7 @@ root = tk.Tk()
 width = root.winfo_screenwidth()
 height = root.winfo_screenheight()
 fig = plt.figure(figsize=(width/100., height/100.))
+fig.subplots_adjust(left=0.09,right=0.95, top= 0.97, bottom=0.3)
 plt.rcParams.update({'font.size': 20})
 plt.gca().xaxis.set_major_locator(mtick.MultipleLocator(0.1))
 plt.gca().yaxis.set_major_locator(mtick.MultipleLocator(0.1))
@@ -67,7 +68,7 @@ popt,pcov = curve_fit(func,KG5[:,0],KG5[:,1], maxfev=10**6)
 k,b = popt
 kg = "кг"
 Stat = "Cтатический прогиб"
-zero = 0.055
+zero = 0.001
 print(k,'/n',b)
 plt.scatter(KG5[:,0],KG5[:,1], c = color1, label = "11,32 "+kg)
 
@@ -90,13 +91,13 @@ plt.plot(KG15[:,0],func(KG15[:,0],*popt), c = color3, label = '$w_{max}$=%.3f$e^
 popt,pcov = curve_fit(func,KG21[:,0],KG21[:,1], maxfev=10**6)
 k,b = popt
 print(k,'/n',b)
-plt.scatter(KG21[:,0],KG21[:,1], c = color4, label = "27,32 "+kg)
+plt.scatter(KG21[:,0],KG21[:,1], c = color1, label = "27,32 "+kg)
 
-plt.plot(KG21[:,0],func(KG21[:,0],*popt), c = color4, label = '$w_{max}$=%.3f$e^{%.3f v}$'%(k,b))
-plt.scatter(zero,0.3902, c = color1, s = 95, marker = 'X')
-plt.scatter(zero,0.563, c = color2, s = 95, marker = 'X')
-plt.scatter(zero,0.734, c = color3, s = 95, marker = 'X')
-plt.scatter(zero,0.942, c = color4, s = 95, marker = 'X')
+plt.plot(KG21[:,0],func(KG21[:,0],*popt), c = color1, label = '$w_{max}$=%.3f$e^{%.3f v}$'%(k,b))
+plt.scatter(zero,0.278, c = color1, s = 95, marker = 'X')
+plt.scatter(zero,0.401, c = color2, s = 95, marker = 'X')
+plt.scatter(zero,0.524, c = color3, s = 95, marker = 'X')
+plt.scatter(zero,0.672, c = color4, s = 95, marker = 'X')
 """
 plt.xlabel("Load travel velocity $\it{v}$, m/s")
 plt.ylabel("Maximum deflection of the ice cover $w_{max}$, mm")
@@ -105,6 +106,12 @@ plt.xlabel("Скорость движения нагрузки $\it{v}$, м/c")
 plt.ylabel("Максимальный прогиб ледяного покрова $w_{max}$, мм")
 
 plt.grid()
-plt.legend(prop={'size':16})
+plt.legend(loc = 'lower center',
+            mode = 'expand',
+            borderaxespad = 20,
+            prop={'size':16},
+            bbox_to_anchor=(0.5,-1),
+            ncol = 4
+            )
 plt.show()
 

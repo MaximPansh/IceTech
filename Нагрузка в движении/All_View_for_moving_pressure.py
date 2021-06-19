@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """
 Created on Mon Apr  5 16:05:12 2021
-
 @author: Кирилл
 """
 
@@ -55,16 +54,30 @@ w1 = []
 name = []
 area1 = []
 area2 = []
+lines = ['dashed', 'dashdot','solid','dotted']
 i = 0
+col = 0 
+fig.subplots_adjust(left=0.09,right=0.95, top= 0.97, bottom=0.2)
 for f in files:
-    i += 1
+    
+    color1 = plt.cm.viridis(col)
+  
     data_S = open_datafile(folder + '/' + f) 
     print("Читаю ", f)
+    data_S = data_S[::500]
+
+   
+
+
+    print(len(data_S))
    # data_save = np.copy(data_S)
     sensor_len = 6 
     index = (np.abs(data_S[:,1]-np.argmin(data_S[:,1]))).argmax()
-    ax4.set_xlabel('Distanse on ice field $\mathit{l}$, m',size = 20)
-    ax4.set_ylabel('Deflection $\mathit{w}$, mm',size = 20)
+    # ax4.set_xlabel('Distanse on ice field $\mathit{l}$, m',size = 20)
+    # ax4.set_ylabel('Deflection $\mathit{w}$, mm',size = 20)
+    ax4.set_xlabel('Длина ледяной пластины $\mathit{l}$, м',size = 20)
+    ax4.set_ylabel('Прогиб $\mathit{w}$, мм',size = 20)
+    
     ax4.tick_params(labelsize = 20)
     
     w1.append(np.abs(data_S[np.argmin(data_S[:,1]),1]))
@@ -106,10 +119,14 @@ for f in files:
     #Area = np.trapz(y = data_S[mid_indx:right_indx, 1], x = data_S[mid_indx:right_indx, 0])/np.trapz(y = data_S[left_indx:mid_indx, 1], x = data_S[left_indx:mid_indx, 0])
     
 
+    # ax4.plot(data_S[:, 0],
+    #          data_S[:, 1], 
+    #          label = ("Velocity: " + f.split('_')[-2]+" m/s \n" + "Deflection: "+ str("%.3f" %float(f.split(" ")[0])) + " mm" ))
+    
     ax4.plot(data_S[:, 0],
              data_S[:, 1], 
-             label = ("Velocity: " + f.split('_')[-2]+" m/s \n" + "Deflection: "+ str("%.3f" %float(f.split(" ")[0])) + " mm" ))
-             #label = f.split('(')[-1].split("_")[0].split(')')[0])
+             label = ("Скорость: " + f.split('_')[-2]+" м/с \n" + "Прогиб: "+ str("%.3f" %float(f.split(" ")[0])) + " мм" ),linewidth = 1.8, c = 'black', linestyle = lines[i])
+    i += 1
              
              
              
@@ -135,29 +152,40 @@ k = po*g
 E = 6*10**9
 
 I = (b*h**3)/12
-a = pow(k/(4*E*I),0.25)
+D = E*h**3/(12*(1-0.35**2))
+a1 = pow(k/(4*D),0.25)
 x = np.arange(0,9.1,0.05)
 def w_arr(x,P):
     w_left = []
     
     for i in range(len(x)):
-        w = (P*a*math.exp(-a*x[i])*(math.cos(a*x[i])+ math.sin(a*x[i])))/(2*k)
+        w = ((P/b)*(a1/(2*k))*math.exp(-a1*x[i])*(math.cos(a1*x[i])+ math.sin(a1*x[i])))
         #print("x = ", x[i],'\n',"w=",w)
         w_left.append(w)
     return np.array(w_left)
 
 
-ax4.plot(x,w_arr(x,-26.32)*1000,linewidth = 3, c = plt.cm.viridis(0), label ="Static deflection")
-ax4.plot(-1*x,w_arr(x,-26.32)*1000,linewidth = 3, c = plt.cm.viridis(0))
+# ax4.plot(x,w_arr(x,-11.32)*1000,linewidth = 3, c = plt.cm.viridis(0), label ="Static deflection")
 
-
+ax4.plot(x,w_arr(x,-21.32)*1000,linewidth = 3, c = 'black', label ="Статический прогиб")
+ax4.plot(-1*x,w_arr(x,-21.32)*1000,linewidth = 3, c = 'black')
 
 Df = pd.DataFrame(data = {"Скорость":vel, "Площадь впадины": area1, "Площадь горба": area2})
-Df.to_excel('excel.xlsx', float_format="%.9f")
+# Df.to_excel('excel.xlsx', float_format="%.9f")
 ax4.xaxis.set_major_locator(mtick.MultipleLocator(1))
 ax4.yaxis.set_major_locator(mtick.MultipleLocator(0.2))
+plt.xlim(-7,5)
+plt.ylim(-1.8,1.6)
 
 print(i)
 plt.grid()
-ax4.legend()
+#fig.subplots_adjust(left=0.08,right=0.95, top= 0.97, bottom=0.2)
+
+ax4.legend(loc = 'lower center',
+            mode = 'expand',
+            borderaxespad = 20,
+            prop={'size':16},
+            bbox_to_anchor=(0.5,-0.82),
+            ncol = 10
+            )
 plt.show()
