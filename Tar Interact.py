@@ -32,7 +32,7 @@ def onRadioButtonsClicked(label):
     Обработчик события при клике по типу датчика
     """
     global F_k
-    dic_F_k = {'2 кг' : -95.824,'3 кг': -107.3, '5 кг': -195.57, '10 кг': -172.41}
+    dic_F_k = {'2 кг' : -95.824,'3 кг': -107.3, '5 кг': -259.47, '10 кг': -172.41}
     return dic_F_k[label]
 
 def tar_F(V, null_point=0, k = 1):
@@ -45,22 +45,27 @@ def tar_F(V, null_point=0, k = 1):
     2 кг = -95.824
     3кг = -107,3
     5кг маленький=-195.57
+    тарировка 01.06.21:
+        5 кг = -259,47
+        
     10кг=-172,41
     улица -571.2
     """
     k = onRadioButtonsClicked(radiobuttons.value_selected)
     b=-k*V[null_point]
+    print(k)
     
     return np.array(k*V+b)#тарировочное уравнение
            
 
-def tar_w(V, k=-2.646, null_point=0):
+def tar_w(V, k=-6.8581, null_point=0):
     """
     Преобразование показаний датчика перемещений (Вольты в миллиметры)
     Тарировочное уравнение вида w(V)=kV+b
     Запрашивает: показания датчика перемещений (Вольты), k, номер начальной точки (стандартное значение 0)
     Возвращает w(массив)
-    в камере -2.646
+    старый датчик -2.646 
+    новый зелёный датчик -6,8581
     улица -15.4992
     """
     b=-k*V[null_point]  
@@ -237,7 +242,7 @@ def add_figets():
 
     i=0
     data=open_datafile(data_file)
-    fig,graph_axes=plt.subplots()
+    fig,graph_axes=plt.subplots(num = "Tar Interact")
     graph_axes.grid()
     # оставляем снизу графика место под виджеты
     fig.subplots_adjust(left=0.07,right=0.95, top= 0.97, bottom=0.29)
