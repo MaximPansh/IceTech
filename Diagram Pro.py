@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from matplotlib.widgets import Button, Slider, RadioButtons
 from tkinter.filedialog import askopenfilename
-from GP_ice import onelayer_h
+from GP_ice import onelayer_h, cone_h, multylayer
 F_1 = 1
 W_1 = 1
 
@@ -84,7 +84,13 @@ def onRadioButtonsClicked(label):
     global gran_d
     value_dic = {'20 мм' : 20,'10 мм' : 10, '3 мм' : 3,'Натурный лёд': 0 }#словарь со значениями диаметров
     gran_d=value_dic[label] # вызов значения из словаря label это то что приходит в функцию при клике на кнопку
-
+    
+    
+def onRadioButtonsClickedLayer(label):
+    global layer
+    layer_dic = {"1 слой": 1, "2 слоя": 2, "3 слоя": 3, "Конусы": 4}#словарь со значениями количества слоев гранул
+    layer = layer_dic[label]# вывод в переменную layer значения количества слоев
+  
 
 def onRadioButtonsClicked_k(label):
     """
@@ -129,7 +135,14 @@ def addPlot (graph_axes,kernel,kernel_1,kernel_A_end,kernel_Fmax,kernel_L):
     plt.draw()   # очистка поля графика
     #h_ice=round(h_ice_S.val, 2) #Толщина промороженного слоя округление до 1 знака после запятой
     if gran_d!=0: 
-        h=round(onelayer_h(h_ice,gran_d),1) # нахождение приведенной толщины льда и её округление
+        if layer == 1:
+            h=round(onelayer_h(h_ice,gran_d),1) # нахождение приведенной толщины льда и её округление
+        elif layer == 2:
+            h = round(multylayer(h_ice, gran_d, layer),1)# нахождение приведенной толщины двухслойного композитного льда и её округление
+        elif layer == 3:
+            h = round(multylayer(h_ice, gran_d, layer),1)# нахождение приведенной толщины трехслойного композитного льда и её округление
+        else:
+            h = round(cone_h(h_ice),1)# нахождение приведенной толщины композитного льда c конусами и её округление
        
     else:
         h=h_ice
@@ -249,7 +262,6 @@ def addPlot (graph_axes,kernel,kernel_1,kernel_A_end,kernel_Fmax,kernel_L):
     fig.text(0.4, 0.022, '$A_{1} = %.5g$ Дж\n$A_{2} = %.5g$ Дж\n$A_{Σ} =%.5g$ Дж\n$h_л =%.4g$ cм ' %(A_p_F,A2,A_p_end,h),size=14)
     fig.text(0.5, 0.022, '$k_{A1} = %.4g$\n$k_{A2} = %.4g$ \n$k_{AΣ} = %.4g$ \n$A_{2}/A_{Σ} = %.4g$ ' %(kp1,kp2,kp_sum,k_a),size=14)
     fig.savefig(filename[0:-4]+'.png')
-    
     plt.draw()
 
 # добавить ,kernel_A если возвращать работу разрушения на 4 позицию здесь
@@ -374,12 +386,23 @@ graph_axes.grid()
 
 # оставляем снизу графика место под виджеты
 fig.subplots_adjust(left=0.08,right=0.95, top= 0.97, bottom=0.2)
+
+
 # Создание переключателя для типа гранул
 sliders()# Вызов слайдеров
 axes_radiobuttons = plt.axes([-0.02, 0.6, 0.11, 0.11], frameon=False, aspect='equal' )# координаты left bottom width height
 radiobuttons= RadioButtons(axes_radiobuttons,['20 мм', '10 мм', '3 мм', 'Натурный лёд'], activecolor='black',active = 2)
 radiobuttons.on_clicked(onRadioButtonsClicked)
 onRadioButtonsClicked(radiobuttons.value_selected)# вызов функции события при нажатии на кнопку
+
+# создание переключателя для количества слоев гранул
+axes_radiobuttons_lay = plt.axes([-0.02, 0.5, 0.11, 0.11], frameon=False, aspect='equal' )# координаты left bottom width height
+radiobuttons_lay= RadioButtons(axes_radiobuttons_lay,['1 слой', '2 слоя', '3 слоя'], activecolor='black',active = 1)
+radiobuttons_lay.on_clicked(onRadioButtonsClickedLayer)
+onRadioButtonsClickedLayer(radiobuttons_lay.value_selected)# вызов функции события при нажатии на кнопку
+
+
+
 # Создание переключателя для типа нагружения
 
 for i in filename.split('/')[-1]:
@@ -389,7 +412,7 @@ for i in filename.split('/')[-1]:
     else:
         act_nag = 0
 
-axes_radiobuttons_k = plt.axes([-0.02, 0.5, 0.11, 0.11], frameon=False, aspect='equal' )# координаты left bottom width height
+axes_radiobuttons_k = plt.axes([-0.02, 0.4, 0.11, 0.11], frameon=False, aspect='equal' )# координаты left bottom width height
 radiobuttons_k= RadioButtons(axes_radiobuttons_k,['Канал', 'Пролом'], activecolor='black', active = act_nag)
 radiobuttons_k.on_clicked(onRadioButtonsClicked_k)
 onRadioButtonsClicked_k(radiobuttons_k.value_selected)
