@@ -33,7 +33,6 @@ def onRadioButtonsClicked(label):
     """
     global F_k
     dic_F_k = {'2 кг' : -95.824,'3 кг': -107.3, '5 кг': -259.47, '10 кг':  -378.42, '20 кг': -356.59}
-    print(dic_F_k[label])
     return dic_F_k[label]
 
 def tar_F(V, null_point=0, k = 1):
@@ -54,7 +53,7 @@ def tar_F(V, null_point=0, k = 1):
     """
     k = onRadioButtonsClicked(radiobuttons.value_selected)
     b=-k*V[null_point]
-    print(k)
+    
     
     return np.array(k*V+b)#тарировочное уравнение
            
@@ -178,6 +177,8 @@ def plot_w_tar(graph_axes) :
 def plot_destract(graph_axes):    
     graph_axes.clear()
     graph_axes.plot(data_mod[:,1],data_mod[:,0])
+    
+    graph_axes.text(data_mod[np.argmax(data_mod[:,0]), 1], data_mod[np.argmax(data_mod[:,0]), 0], "$F_{max}=$" + str(round(data_mod[np.argmax(data_mod[:,0]), 0], 3)))
     graph_axes.grid()
     graph_axes.set_xlabel('Прогиб, миллиметры')
     graph_axes.set_ylabel('Сила, Ньютоны')
@@ -292,8 +293,11 @@ def add_figets():
         elif i == '5':
             act_sensor = 2
             break
-        else:
+        elif i == '1':
             act_sensor = 3
+            break
+        else:
+            act_sensor = 4
 
     axes_radiobuttons = plt.axes([-0.02, 0.4, 0.11, 0.11], frameon=False, aspect='equal')# координаты left bottom width height
     radiobuttons= RadioButtons(axes_radiobuttons,['2 кг', '3 кг', '5 кг', '10 кг','20 кг'], activecolor='black', active = act_sensor)
