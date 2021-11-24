@@ -70,7 +70,7 @@ for f in files:
 
 
     print(len(data_S))
-   # data_save = np.copy(data_S)
+    data_save = np.copy(data_S)
     sensor_len = 6 
     index = (np.abs(data_S[:,1]-np.argmin(data_S[:,1]))).argmax()
     # ax4.set_xlabel('Distanse on ice field $\mathit{l}$, m',size = 20)
@@ -125,7 +125,8 @@ for f in files:
     
     ax4.plot(data_S[:, 0],
              data_S[:, 1], 
-             label = ("Скорость: " + f.split('_')[-2]+" м/с \n" + "Прогиб: "+ str("%.3f" %float(f.split(" ")[0])) + " мм" ),linewidth = 1.8, c = 'black', linestyle = lines[i])
+             #label = ("Скорость: " + f.split('_')[-2]+" м/с \n" + "Прогиб: "+ str("%.3f" %float(f.split(" ")[0])) + " мм" ),linewidth = 1.8, c = 'black', linestyle = lines[i])
+             label = ("Скорость: " + f.split('_')[-2]+" м/с \n" + "Прогиб: "+ str("%.3f" %float(f.split(" ")[0])) + " мм" ),linewidth = 1.8)
     i += 1
              
              
@@ -142,7 +143,7 @@ for f in files:
     area1.append(np.trapz(y = data_S[mid_indx:right_indx, 1], x = data_S[mid_indx:right_indx, 0]))
     area2.append(np.trapz(y = data_S[left_indx:mid_indx, 1], x = data_S[left_indx:mid_indx, 0]))
     #ax4.scatter(data_S[np.argmax(data_S[0:np.argmin(data_S[:, 1]), 1]),0],data_S[np.argmax(data_S[0:np.argmin(data_S[:, 1]), 1]),1],color='blue', s=50, marker='o')
-    #np.savetxt( str("%.4f" %float(np.abs(data_S[int(np.argmin(data_S[:,1])), 1]))) + f[0:-4] + '.txt', data_save)
+    np.savetxt( str("%.4f" %float(np.abs(data_S[int(np.argmin(data_S[:,1])), 1]))) + f[0:-4] + '.txt', data_save)
 
 po = 1000
 g = 9.81
@@ -167,8 +168,8 @@ def w_arr(x,P):
 
 # ax4.plot(x,w_arr(x,-11.32)*1000,linewidth = 3, c = plt.cm.viridis(0), label ="Static deflection")
 
-ax4.plot(x,w_arr(x,-21.32)*1000,linewidth = 3, c = 'black', label ="Статический прогиб")
-ax4.plot(-1*x,w_arr(x,-21.32)*1000,linewidth = 3, c = 'black')
+ax4.plot(x,w_arr(x,-27.32)*1000,linewidth = 3, c = 'black', label ="Статический прогиб")
+ax4.plot(-1*x,w_arr(x,-27.32)*1000,linewidth = 3, c = 'black')
 
 Df = pd.DataFrame(data = {"Скорость":vel, "Площадь впадины": area1, "Площадь горба": area2})
 # Df.to_excel('excel.xlsx', float_format="%.9f")

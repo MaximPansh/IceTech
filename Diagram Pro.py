@@ -143,7 +143,6 @@ def addPlot (graph_axes,kernel,kernel_1,kernel_A_end,kernel_Fmax,kernel_L):
             h = round(multylayer(h_ice, gran_d, layer),1)# нахождение приведенной толщины трехслойного композитного льда и её округление
         else:
             h = round(cone_h(h_ice),1)# нахождение приведенной толщины композитного льда c конусами и её округление
-       
     else:
         h=h_ice
     kernel=int(kernel)
@@ -385,7 +384,7 @@ fig,graph_axes=plt.subplots()
 graph_axes.grid()
 
 # оставляем снизу графика место под виджеты
-fig.subplots_adjust(left=0.08,right=0.95, top= 0.97, bottom=0.2)
+fig.subplots_adjust(left=0.08,right=0.95, top= 0.97, bottom=0.3)
 
 
 # Создание переключателя для типа гранул
