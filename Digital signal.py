@@ -35,20 +35,51 @@ def open_datafile(path,a=1,b=20000000):
     file.close()
     return data[a:(b+1)]
 
+
+def butter_lowpass(normal_cutoff, order=5):
+    """
+    Настройка фильтра Баттерворта
+    """
+    return sp.signal.butter(order, normal_cutoff, btype='low', analog=False)
+
+
+def butter_lowpass_filtfilt(data, normal_cutoff, order=5):
+    """
+    Низкочастотный фильтр Баттерворта. Вызывает функцию настройки фильтра Баттерворта.
+    Запрашивает: 1-мерный массив данных, нормальную отсечку, порядок
+    Возвращает: 1-мерный отфильтрованный массив
+    """
+    b, a = butter_lowpass(normal_cutoff, order=order)
+    return sp.signal.filtfilt(b, a, data)
+
+def tar_w(V, k, null_point=0):
+    """
+    Преобразование показаний датчика перемещений (Вольты в миллиметры)
+    Тарировочное уравнение вида w(V)=kV+b
+    Запрашивает: показания датчика перемещений (Вольты), k, номер начальной точки (стандартное значение 0)
+    Возвращает w(массив)
+
+    """
+    b=-k*V[null_point]  
+    return np.array(k*V+b) #Тарировочное уравнение
+
 """
 Переменные
 """
-d = 3 # диаметр
+d = 246 # диаметр
 Volt_ch = 2 # граница напряжения относительно которой сравниваем
-med = 101 #размер ядра фильтрации медианного фильтра
+med = 5 #размер ядра фильтрации медианного фильтра
+bat = 0.02
 
-filename=askopenfilename()# Вызов окна открытия файла
-data=open_datafile(filename) #Открыть файл с данными 
-fig, ax = plt.subplots() # создаем объект figure и axes
+filename = askopenfilename()# Вызов окна открытия файла
+data = open_datafile(filename) #Открыть файл с данными 
+
+
+fig, ax = plt.subplots(1,3) # создаем объект figure и axes
 T = data[:,0]
-V = data[:,1]
-
-V = sp.signal.medfilt(V, med)
+V = data[:,2]
+#plt.plot(T,V)
+#V = sp.signal.medfilt(V, med)
 
 V[0], V[-1] = 0, 0
 
@@ -58,12 +89,7 @@ n = np.vstack((n[np.where(V[n - 1] < Volt_ch)], n[np.where(V[n + 1] < Volt_ch)])
 # первый столбец ищет точки на одну итерацию меньше где происходит изменение напряжения,
 # второй столбец аналогично но итерация вперед
 
-# Построение точек и графика напряжения от времени
-ax.plot(T, V)
-plt.scatter(T[n[0]], V[n[0]])#n[0] - индексы точек подъёма
-plt.scatter(T[n[1]], V[n[1]])#n[1] - индексы точек падения
-ax.set_xlabel('Время, сек')
-ax.set_ylabel('Напряжение, В \n Скорость, мм/сек')
+
 
 v = 1/(((T[n[0, 1:]] + T[n[1, 1:]]) / 2) - ((T[n[0, :-1]] + T[n[1, :-1]]) / 2)) 
 v = (math.pi* d /360) * np.hstack([ v, np.array(1 / (((T[n[0, -1]] + T[n[1, -1]]) / 2) - ((T[n[0, -2]] + T[n[1, -2]])/2)))])
@@ -71,6 +97,20 @@ t = (((T[n[0, 1:]] + T[n[1, 1:]]) / 2) + ((T[n[0, :-1]] + T[n[1, :-1]]) / 2))/2
 t = np.hstack([ t, np.array((((T[n[0, -1]] + T[n[1, -1]]) / 2) + ((T[n[0, -2]] + T[n[1, -2]])/2)) / 2)])
 
 
-plt.plot(t,v)# скорость от времени построение графика
+
+ax[0].set_xlabel('Время, сек')
+ax[0].set_ylabel('Напряжение, В \n Скорость, мм/сек')
+ax[0].plot(t,v, label = "Не фильтованый")
+v = sp.signal.medfilt(v, med)
+v = butter_lowpass_filtfilt(v, bat)
+ax[0].plot(t,v, label = "Медианый + Батерворта")# скорость от времени построение графика
+ax[1].plot(t,tar_w(data[:,1], k = 1.6084))
+ax[2].plot(t,tar_w(data[:,3], k = -1.5389))
+ax[3].plot(t,tar_w(data[:,4], k = 1.5763))
+
+
+plt.legend()
 plt.grid()
+figManager = plt.get_current_fig_manager()
+figManager.window.showMaximized()
 plt.show()

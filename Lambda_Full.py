@@ -38,11 +38,18 @@ dic = {"1":{'F':{20:{'ЦП':[0.3314, 1.761], '1кан':[0.3524, 1.497], '2кан
        },
        "2":{'F':{
        10:{'ЦП':[3.395, 1.072], '1кан':[1.073, 1.418], '2кан':[0.1701, 2.227], '3кан':[2.808, 0.986]},
-       3:{'ЦП':[0.944, 2.311], '1кан':[0.6035, 1.963], '2кан':[0.1613, 2.587], '3кан':[]}
+       3:{'ЦП':[0.09707, 3.38], '1кан':[0.6035, 1.963], '2кан':[0.1613, 2.587], '3кан':[]}
            },
        'A1':{
        10:{'ЦП':[0.0212, 1.347], '1кан':[0.0428, 0.8302], '2кан':[0.002732, 1.946], '3кан':[0.01489, 1.216]},
-       3:{'ЦП':[0.01458, 1.949], '1кан':[0.01079, 1.822], '2кан':[0.01157, 1.675], '3кан':[]}
+       3:{'ЦП':[0.01458, 1.949], '1кан':[0.0001051, 6.019], '2кан':[0.01157, 1.675], '3кан':[]}
+           }
+       },
+       "3":{'F':{
+       3:{'ЦП':[34.87, 0.5321], '1кан':[0.6495, 1.923], '2кан':[0.9545, 1.713], '3кан':[9.564, 0.752]}
+           },
+       'A1':{
+       3:{'ЦП':[0.01046, 1.074], '1кан':[0.0982 * 10** -5, 3.605], '2кан':[0.001852, 2.313], '3кан':[0.0002064, 3.314]}
            }
        }
        }
@@ -53,12 +60,12 @@ dic_Nat = {"A1":{'ЦП':[0.02352, 2.5], '1кан':[0.001825, 2.778], '2кан':[
            "F":{'ЦП':[2.786, 2], '1кан':[0.4731, 2.208], '2кан':[0.3475, 2.248], '3кан':[210.2, 1.082]}}
 
 
-Gran = 20 # диаметр гранул
-layer = "1"
-left = 4
+Gran = 3 # диаметр гранул
+layer = "2"
+left = 6.4
 #словарь для 1 слоя:
 #h_dic = {20:12, 10:8.5, 3:7} #Словарик максимальных толщин проморозки в серии опытов
-h_dic = {20:11}
+h_dic = {3:10}
 h_len = h_dic[Gran]
 Type_array = ["ЦП", "1кан", "2кан"]
 A_switch_array = [True, False] # если False то считаем силу, если True - работу1
@@ -100,12 +107,12 @@ def calculation(Type, Gran, A_switch, dic, line_width, line_style):
     Lam = (dic_Nat[key_nat][Type][0]/km) ** (1/(m-dic_Nat[key_nat][Type][1]))#коэффициент геометрического подобия
     print(Lam)
     Hn = h_model*Lam #толщина натурного льда в пересчете с модельного
-    ax2.plot(h, Lam, label = key_nat + ' ' + str(Gran) + "мм " + Type, linewidth = line_width, c = "black", linestyle = line_style)
-    ax3.plot(h, Hn, label = key_nat + ' ' + str(Gran) + "мм " + Type, linewidth = line_width, c = "black", linestyle = line_style)
-    #ax2.plot(h, Lam, label = key_nat + ' ' + str(Gran) + "мм " + Type)
-    #ax3.plot(h, Hn, label = key_nat + ' ' + str(Gran) + "мм " + Type)
-    ax2.plot([left, left],[0, 200], c = 'black', linewidth = 5)
-    ax3.plot([left, left],[0, 2000], c = 'black', linewidth = 5)
+    # ax2.plot(h, Lam, label = key_nat + ' ' + str(Gran) + "мм " + Type, linewidth = line_width, c = "black", linestyle = line_style)
+    # ax3.plot(h, Hn, label = key_nat + ' ' + str(Gran) + "мм " + Type, linewidth = line_width, c = "black", linestyle = line_style)
+    ax2.plot(h, Lam, label = key_nat + ' ' + str(Gran) + "мм " + Type)
+    ax3.plot(h, Hn, label = key_nat + ' ' + str(Gran) + "мм " + Type)
+    ax2.plot([left, left],[0, 200], c = 'black', linewidth = 3)
+    ax3.plot([left, left],[0, 2000], c = 'black', linewidth = 3)
 
 fig = plt.figure(figsize=(width/100., height/100.)) 
 fig.subplots_adjust(left=0.09,right=0.95, top= 0.97, bottom=0.2)
@@ -132,13 +139,13 @@ ax2.xaxis.set_major_locator(mtick.MultipleLocator(1))
 ax3.xaxis.set_major_locator(mtick.MultipleLocator(1))
 ax3.tick_params(labelsize = 18)# размер текста толщина льда
 ax2.tick_params(labelsize = 18)# размер текста лямбда
-ax2.yaxis.set_major_locator(mtick.MultipleLocator(10))# цена деления лямбда
-ax3.yaxis.set_major_locator(mtick.MultipleLocator(100))# цена деления толщины льда
+ax2.yaxis.set_major_locator(mtick.MultipleLocator(1))# цена деления лямбда
+ax3.yaxis.set_major_locator(mtick.MultipleLocator(10))# цена деления толщины льда
 #Пределы осей:
-ax2.set_xlim(0, h_len)
-ax3.set_xlim(0, h_len)
-ax2.set_ylim(0, 200)#Лямбда
-ax3.set_ylim(0, 1800)#толщина льда
+ax2.set_xlim(left, h_len)
+ax3.set_xlim(left, h_len)
+ax2.set_ylim(0, 10)#Лямбда
+ax3.set_ylim(0, 30)#толщина льда
 
 #Названия осей:
 ax3.set_xlabel('Толщина проморозки $h_{пром}$, мм', size = 20)

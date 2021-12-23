@@ -81,7 +81,7 @@ def short_proj():
 
 
 ax.get_proj = short_proj
-n = 1.2
+n = 2
 
 X = find_waterline(P1[:, 2], n)
 #print(P1[X, 1])
@@ -91,18 +91,18 @@ X = find_waterline(P1[:, 2], n)
 ax.scatter(P1[X, 0],#Координата длины
             P1[X, 1],#Координата ширины
             P1[X, 2], color = "green")#Координата высоты
-# X = find_waterline(P2[:, 2], n)
-# ax.scatter(P2[X, 0],
-#             P2[X, 1],
-#             P2[X, 2])
-# X = find_waterline(P3[:, 2], n)
-# ax.scatter(P3[X, 0],
-#             P3[X, 1],
-#             P3[X, 2])
+X = find_waterline(P2[:, 2], n)
+ax.scatter(P2[X, 0],
+            P2[X, 1],
+            P2[X, 2])
+X = find_waterline(P3[:, 2], n)
+ax.scatter(P3[X, 0],
+            P3[X, 1],
+            P3[X, 2])
 
-ax.plot_surface(P1[:, 0],#Координата длины
-            P1[:, 1],#Координата ширины
-            P1[:, 2])#Координата высоты
+# ax.plot_surface(P1[:, 0],#Координата длины
+#             P1[:, 1],#Координата ширины
+#             P1[:, 2])#Координата высоты
 
 # ax.scatter(P2[:, 0],
 #             P2[:, 1],

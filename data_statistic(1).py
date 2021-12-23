@@ -83,7 +83,7 @@ while index:
     influence=results.get_influence() #Оценка на грубые промахи
     r_stud=sm.regression.linear_model.OLSResults.outlier_test(results) #Внешние стьюдентизированные остатки
     print(r_stud)
-    index=r_stud.index[r_stud.student_resid.abs()>2].tolist() #Ищем остатки, большие 2 по модулю
+    index=r_stud.index[r_stud.student_resid.abs()>3].tolist() #Ищем остатки, большие 2 по модулю
     data_line.drop(index, inplace=True) #Удаляем точки из расчёта, если внешний стьюдентизированный остаток больше 2
     print('Удаляем строки:', index)
     del_index=np.append(del_index, index)
@@ -121,8 +121,8 @@ ax1.set_ylim(0, data.F.max()*1.1)
 
 #Названия осей:
 ax1.set_xlabel('Толщина льда $h_{л}$, мм')
-#ax1.set_ylabel('Критическая работа разрушения $A_{1}$, Дж')
-ax1.set_ylabel('Максимальная сила $F_{max}$, Н')
+ax1.set_ylabel('Критическая работа разрушения $A_{1}$, Дж')
+#ax1.set_ylabel('Максимальная сила $F_{max}$, Н')
 
 #Добавляем промежуточные деления осей
 plt.gca().xaxis.set_minor_locator(mtick.MultipleLocator(50))
@@ -138,7 +138,7 @@ points=ax1.scatter(data.h_p, data.F, color=color1, marker='o')
 regres=ax1.plot(np.exp(x[:,1]),np.exp(y))
 
 #Легенда:
-ax1.legend((points, regres), labels=(r'$F_{1} = %.4g \cdot h_{л}^{%.4g}$, $R^2=%.3g$' % (math.exp(results.params.Intercept), results.params.ln_h, results.rsquared), 'Экспериментальные точки'), loc='upper left')
+ax1.legend((points, regres), labels=(r'$A_{1} = %.4g \cdot h_{л}^{%.4g}$, $R^2=%.3g$' % (math.exp(results.params.Intercept), results.params.ln_h, results.rsquared), 'Экспериментальные точки'), loc='upper left')
 #открываем график в полный экран
 figManager = plt.get_current_fig_manager()
 figManager.window.showMaximized()
