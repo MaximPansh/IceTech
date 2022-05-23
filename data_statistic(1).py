@@ -20,7 +20,6 @@ height = root.winfo_screenheight()
 
 filename = askopenfilename()
 
-#Gran = int(filename.split(' ')[-1].split('м')[0])
 def open_datafile(path):
     """
     Открыть файл с данными диаграммы разрушения
