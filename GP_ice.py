@@ -24,10 +24,9 @@ def onelayer_h (h, d, ro_b=0.919, ro_w=1):
             h_dowseg=d-h_upseg-h  #Расчёт высоты, на которую шарик торчит вниз под нижней поверхностью льда
             V_dowseg=pi*pow(h_dowseg,2)*(R-h_dowseg/3)  #Объём сегмента шарика, торчащий под поверхностью льда
             h_cond1=h+(V_upseg+V_dowseg)/(2*S)   #Приведённая толщина
-            print("1")
+
         else:   #Если с переморозкой
             h_cond1=h+V_upseg/(2*S)
-            print("2")
         return h_cond1
     
     try:
