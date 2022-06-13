@@ -59,12 +59,12 @@ def two_point_line (arg_1, arg_2):
     Запращивает аргументы двух точек
     Возвращает значение X на этой прямой когда Y равно нулю
     """
-    print(arg_1, arg_2)
+    
     x1=data[arg_1, 1]
     y1=data[arg_1, 0]
     x2=data[arg_2, 1]
     y2=data[arg_2, 0]
-    print((((0-y1)*(x2-x1))/(y2-y1))+x1)
+    
     return (((0-y1)*(x2-x1))/(y2-y1))+x1
 
 
@@ -74,7 +74,7 @@ def corect_w(data, w):
     Запрашивает: массив данных, корректировочное значение
     Возвращает откорректированный массив
     """
-    print('Corect')
+    
     return data[:, 1]-w
 
 def onRadioButtonsClicked(label):
@@ -82,13 +82,13 @@ def onRadioButtonsClicked(label):
     Обработчик события при клике по radiobuttons типу гранул
     """
     global gran_d
-    value_dic = {'20 мм' : 20,'10 мм' : 10, '3 мм' : 3,'Натурный лёд': 0 }#словарь со значениями диаметров
+    value_dic = {'20 мм' : 20,'10 мм' : 10, '3 мм' : 3,'Конусы': 2,'Натурный лёд': 0 }#словарь со значениями диаметров
     gran_d=value_dic[label] # вызов значения из словаря label это то что приходит в функцию при клике на кнопку
     
     
 def onRadioButtonsClickedLayer(label):
     global layer
-    layer_dic = {"1 слой": 1, "2 слоя": 2, "3 слоя": 3, "Конусы": 4}#словарь со значениями количества слоев гранул
+    layer_dic = {"1 слой": 1, "2 слоя": 2, "3 слоя": 3}#словарь со значениями количества слоев гранул
     layer = layer_dic[label]# вывод в переменную layer значения количества слоев
   
 
@@ -133,16 +133,21 @@ def addPlot (graph_axes,kernel,kernel_1,kernel_A_end,kernel_Fmax,kernel_L):
     graph_axes.clear()
     graph_axes.grid()
     plt.draw()   # очистка поля графика
+    fig.subplots_adjust(left=0.08,right=0.95, top= 0.95, bottom=0.1)
     #h_ice=round(h_ice_S.val, 2) #Толщина промороженного слоя округление до 1 знака после запятой
     if gran_d!=0: 
+        
         if layer == 1:
-            h=round(onelayer_h(h_ice,gran_d),1) # нахождение приведенной толщины льда и её округление
+            h=round(onelayer_h(h_ice,gran_d),2) # нахождение приведенной толщины льда и её округление
+            if gran_d == 2:
+                h = round(cone_h(h_ice),2)# нахождение приведенной толщины композитного льда c конусами и её округление
+                
         elif layer == 2:
-            h = round(multylayer(h_ice, gran_d, layer),1)# нахождение приведенной толщины двухслойного композитного льда и её округление
+            h = round(multylayer(h_ice, gran_d, layer),2)# нахождение приведенной толщины двухслойного композитного льда и её округление
+           
         elif layer == 3:
-            h = round(multylayer(h_ice, gran_d, layer),1)# нахождение приведенной толщины трехслойного композитного льда и её округление
-        else:
-            h = round(cone_h(h_ice),1)# нахождение приведенной толщины композитного льда c конусами и её округление
+            h = round(multylayer(h_ice, gran_d, layer),2)# нахождение приведенной толщины трехслойного композитного льда и её округление
+                        
     else:
         h=h_ice
     kernel=int(kernel)
@@ -151,13 +156,13 @@ def addPlot (graph_axes,kernel,kernel_1,kernel_A_end,kernel_Fmax,kernel_L):
     kernel_A_end=float(kernel_A_end)-two_point_line(kernel, kernel_1)# Можно использовать float т.к. далее это число используется только в исскуственным массивом
     Fmax=int(kernel_Fmax)
     kernel_L=int(kernel_L) #int необходим там где идет работа с конкретной величиной индекса в массиве данных
-    print(data[:,1])
+    
     data[:,1]=corect_w(data,two_point_line(kernel, kernel_1))  # коректировка перемещения и как следствие массива данных
-    print(data[:,1])
+    
     if gran_d != 0:
         F_arh()
     # лимиты отображения области
-    graph_axes.set_xlim([data[0,1]-0.2,float(kernel_A_end+1)])  
+    graph_axes.set_xlim([0,float(kernel_A_end+1)])  
     if data[F_max, 0] < 8:
         graph_axes.set_ylim([0,float(data[F_max,0])+1])
         if data[F_max, 0] < 4.5:
@@ -181,34 +186,38 @@ def addPlot (graph_axes,kernel,kernel_1,kernel_A_end,kernel_Fmax,kernel_L):
             E=(D*12*(1-pow(puas,2)))/pow(h/100,3)
             r1=1/((ro*g/D)**0.25)
     if gran_d != 0:
-#        A_p=np.trapz(y=data[:kernel_A,0],x=(data[:kernel_A,1]/1000)) #Определение работы разрушения
-        A_p_F=np.trapz(y=data[:Fmax,0],x=(data[:Fmax,1]/1000))   # Определение работы до Fmax
+
+        A1=np.trapz(y=data[:Fmax,0],x=(data[:Fmax,1]/1000))   # Определение работы до Fmax
         # Работа поссле Fmax складывается из работы от точки Fmax до точки L cо слайдера и работы под прямой посчитаной от точки L до A_end.
         #Массив Х есть срез искуственного массива которые считается в функции two_point_line_z
         A2=np.trapz(y=data[Fmax:kernel_L,0],x=(data[Fmax:kernel_L,1]/1000))+np.trapz(y=two_point_line_z(kernel_L, kernel_A_end),x=X/1000)
-        A_p_end=A_p_F+A2
-        kp1=A_p_F/(data[F_max,0]*data[Fmax,1]/1000)
+        A_sum=A1+A2
+        kp1=A1/(data[F_max,0]*data[Fmax,1]/1000)
         kp2=A2/(data[F_max,0]*(kernel_A_end-data[Fmax,1])/1000)
-        kp_sum=A_p_end/(data[F_max,0]*kernel_A_end/1000)
-        k_a=A2/A_p_end
+        kp_sum=A_sum/(data[F_max,0]*kernel_A_end/1000)
+        k_a=A2/A_sum
+        Wmax = A_sum / (data[F_max, 0] * kp_sum / 1000)
+        WA2 =  A2/(data[F_max, 0] *kp2/1000)
     else:
         data1 = np.copy(data)
         data1[:,0] *= 1000
-#        A_p=np.trapz(y=data1[:kernel_A,0],x=(data1[:kernel_A,1] / 100)) #Определение работы разрушения
-        A_p_F=np.trapz(y=data1[:Fmax,0],x=(data1[:Fmax,1] / 100))   # Определение работы до Fmax
+
+        A1=np.trapz(y=data1[:Fmax,0],x=(data1[:Fmax,1] / 100))   # Определение работы до Fmax
         # Работа поссле Fmax складывается из работы от точки Fmax до точки L cо слайдера и работы под прямой посчитаной от точки L до A_end.
         #Массив Х есть срез искуственного массива которые считается в функции two_point_line_z
         A2=np.trapz(y=data1[Fmax:kernel_L,0],x=(data1[Fmax:kernel_L,1]) / 100)+np.trapz(y=two_point_line_z(kernel_L, kernel_A_end),x=X/100)
-        A_p_end=A_p_F+A2
-        kp1=A_p_F/(data1[F_max,0]*data1[Fmax,1] / 100)
+        A_sum=A1+A2
+        kp1=A1/(data1[F_max,0]*data1[Fmax,1] / 100)
         kp2=A2/(data1[F_max,0]*(kernel_A_end-data1[Fmax,1]) / 100)
-        kp_sum=A_p_end/(data1[F_max,0]*kernel_A_end / 100)
-        k_a=A2/A_p_end
+        kp_sum=A_sum/(data1[F_max,0]*kernel_A_end / 100)
+        k_a = A2/A_sum
+        Wmax = A_sum / (data[F_max, 0] * kp_sum/10)
+        WA2 =  A2/(data[F_max, 0] *kp2/10)
     #здесь , A_p
     if gran_d == 0:
-        ser=[filename[-6:-4],gran_d, h, data[F_max, 0], data[Fmax, 1], A_p_F, A2, A_p_end, kp1, kp2, kp_sum, k_a]#Добавить работу разрушения здесь
+        ser=[filename[-6:-4],gran_d, h, data[F_max, 0], data[Fmax, 1], A1, A2, A_sum, kp1, kp2, kp_sum, k_a, Wmax, WA2]
     else:
-        ser=[gran_d,h_ice, h, data[F_max, 0], data[Fmax, 1], A_p_F, A2, A_p_end, kp1, kp2, kp_sum, k_a]#Добавить работу разрушения здесь
+        ser=[gran_d,h_ice, h, data[F_max, 0], data[Fmax, 1], A1, A2, A_sum, kp1, kp2, kp_sum, k_a, Wmax, WA2]
     if Nag==False:
         ser+= [D, E, r1]
     Res_pd=pd.Series(ser)
@@ -223,44 +232,44 @@ def addPlot (graph_axes,kernel,kernel_1,kernel_A_end,kernel_Fmax,kernel_L):
         graph_axes.set_xlabel('Прогиб w, миллиметры')
         graph_axes.set_ylabel('Сила F, Ньютоны')
         
-    if gran_d!=0:
-        graph_axes.set_title('Диаграмма разрушения ($\o_{гранул}$ = %g мм, $h_{пром}$ = %g мм)'%(gran_d,h_ice))
-    else:
-        graph_axes.set_title('Диаграмма разрушения')#' $h_{пром}$ = %g мм'%(h_ice)) 
         
     if gran_d != 0:
         if h_ice <= 3.6 and gran_d == 3:
-            graph_axes.annotate('max F=%.4g Н, w=%.4g мм' %(data[F_max,0],data[Fmax,1]), xy=(data[F_max,1],data[F_max,0]),xytext=(data[F_max,1]+.1,data[F_max,0]+.03), size=10)
+            graph_axes.annotate('$F_{max}$=%.4g Н, w=%.4g мм' %(data[F_max,0],data[Fmax,1]), xy=(data[F_max,1],data[F_max,0]),xytext=(data[F_max,1]+.1,data[F_max,0]+.03))
         else:
-            graph_axes.annotate('max F=%.4g Н, w=%.4g мм' %(data[F_max,0],data[Fmax,1]), xy=(data[F_max,1],data[F_max,0]),xytext=(data[F_max,1]+0.5,data[F_max,0]+.1), size=10)
+            graph_axes.annotate('$F_{max}$=%.4g Н, w=%.4g мм' %(data[F_max,0],data[Fmax,1]), xy=(data[F_max,1],data[F_max,0]),xytext=(data[F_max,1]+0.5,data[F_max,0]+.1))
     else:
         if  data[F_max, 0] < 1:
-            graph_axes.annotate('max F=%.4g кН, w=%.4g см' %(data[F_max,0],data[Fmax,1]), xy=(data[F_max,1],data[F_max,0]),xytext=(data[F_max,1]+0.05,data[F_max,0]+.05), size=10)
+            graph_axes.annotate('$F_{max}$=%.4g кН, w=%.4g см' %(data[F_max,0],data[Fmax,1]), xy=(data[F_max,1],data[F_max,0]),xytext=(data[F_max,1]+0.05,data[F_max,0]+.05))
 
         else:
-            graph_axes.annotate('max F=%.4g кН, w=%.4g см' %(data[F_max,0],data[Fmax,1]), xy=(data[F_max,1],data[F_max,0]),xytext=(data[F_max,1]+0.5,data[F_max,0]+.1), size=10)
+            graph_axes.annotate('$F_{max}$=%.4g кН, w=%.4g см' %(data[F_max,0],data[Fmax,1]), xy=(data[F_max,1],data[F_max,0]),xytext=(data[F_max,1]+0.5,data[F_max,0]+.1))
     
     graph_axes.scatter(data[Fmax,1],data[Fmax,0],color='orange', s=30, marker='o')
     k_D=k_line(kernel) #Получаем коэффициент прямой упругой зоны
-    graph_axes.plot((line(-0.6,k_D,0),line(data[Fmax,0]-(data[Fmax,0]/3),k_D,0)),(-0.6,data[Fmax,0]-(data[Fmax,0]/3)), linestyle = '--', linewidth=1, color = 'darkmagenta') #Строим прямую упругой части графика
+    
+    
     graph_axes.scatter(data[kernel,1],data[kernel,0],color='orange', s=30, marker='o') #Точка по которой строили прямую и считали D и E
     graph_axes.scatter(data[kernel_1,1],data[kernel_1,0],color='orange', s=30, marker='o') #Вторая точка прямой упругой зоны
-    #graph_axes.scatter(data[kernel_A,1],data[kernel_A,0],color='orange', s=30, marker='o') #Точка по которой считали работу разрушения
     graph_axes.scatter(data[Fmax,1],data[Fmax,0],color='red', s=30, marker='o') #Точка по которой считали работу по максимальной силе
-    graph_axes.plot((data[Fmax,1],data[Fmax,1]),(data[Fmax,0],0), linestyle = '--', linewidth=1, color = 'darkmagenta')
-    #graph_axes.plot((data[kernel_A,1],data[kernel_A,1]),(data[kernel_A,0],0), linestyle = '--', linewidth=1, color = 'darkmagenta')
-    graph_axes.plot([kernel_A_end,data[kernel_L,1]],[0,data[kernel_L,0]], linestyle = '--', linewidth=1, color = 'darkmagenta') #Строим прямую закритической части диаграммы
     graph_axes.scatter(data[kernel_L,1],data[kernel_L,0],color='orange', s=30, marker='o')
-    #xy1=(data[kernel,1],data[kernel,0])
-   # xytext1=(data[kernel,1]+0.25,data[kernel,0]-.2)
-
-    if Nag==False:
-        fig.text(0.25,0.05,'$r_{0}$ = %.3g м\nD = %.5g Н/м\nE = 'r'$%.4g\times10^3$ МПа' %(r1,D,E/pow(10,9)),size=14) #Выводим значения D и E
     
+    graph_axes.plot((line(-0.6,k_D,0),line(data[Fmax,0]-(data[Fmax,0]/3),k_D,0)),(-0.6,data[Fmax,0]-(data[Fmax,0]/3)), linestyle = '--', linewidth=1, color = 'darkmagenta') #Строим прямую упругой части графика
+    graph_axes.plot((data[Fmax,1],data[Fmax,1]),(data[Fmax,0],0), linestyle = '--', linewidth=1, color = 'darkmagenta')
+    graph_axes.plot([kernel_A_end,data[kernel_L,1]],[0,data[kernel_L,0]], linestyle = '--', linewidth=1, color = 'darkmagenta') #Строим прямую закритической части диаграммы
+    
+    fig2 = plt.figure()
+    if Nag==False:
+        fig2.text(0.4,0.8,'$r_{0}$ = %.3g м\nD = %.5g Н/м\nE = 'r'$%.4g\times10^3$ МПа' %(r1,D,E/pow(10,9)),size=14) #Выводим значения D и E
+        print('$r_{0}$ = %.3g м\nD = %.5g Н/м\nE = 'r'$%.4g\times10^3$ МПа' %(r1,D,E/pow(10,9))) #Выводим значения D и E в консоль
+        
     #здесь \n$A_р$ = %.5g Дж во 2 позицию и ,A_p
-    fig.text(0.4, 0.022, '$A_{1} = %.5g$ Дж\n$A_{2} = %.5g$ Дж\n$A_{Σ} =%.5g$ Дж\n$h_л =%.4g$ cм ' %(A_p_F,A2,A_p_end,h),size=14)
-    fig.text(0.5, 0.022, '$k_{A1} = %.4g$\n$k_{A2} = %.4g$ \n$k_{AΣ} = %.4g$ \n$A_{2}/A_{Σ} = %.4g$ ' %(kp1,kp2,kp_sum,k_a),size=14)
-    fig.savefig(filename[0:-4]+'.png')
+    fig2.text(0.4, 0.22, '$A_{1} = %.5g$ Дж\n$A_{2} = %.5g$ Дж\n$A_{Σ} =%.5g$ Дж\n$h_л =%.4g$ cм $k_{A1} = %.4g$\n$k_{A2} = %.4g$ \n$k_{AΣ} = %.4g$ \n$A_{2}/A_{Σ} = %.4g$ \n$W_{max} = %.4g$ мм \n$W_{A2} = %.4g$ мм' %(A1,A2,A_sum,h,kp1,kp2,kp_sum,k_a, Wmax, WA2),size=14)
+    print('$A_{1} = %.5g$ Дж\n$A_{2} = %.5g$ Дж\n$A_{Σ} =%.5g$ Дж' %(A1,A2,A_sum))
+    print('$k_{A1} = %.4g$\n$k_{A2} = %.4g$ \n$k_{AΣ} = %.4g$ \n$A_{2}/A_{Σ} = %.4g$ \n$W_{max} = %.4g$ мм \n$W_{A2} = %.4g$ мм ' %(kp1,kp2,kp_sum,k_a, Wmax, WA2))
+    fig2.savefig(filename[0:-4]+ ' ' + str(h_ice) + ' мм' + ' данные' +'.png')
+    fig2.clear()
+    fig.savefig(filename[0:-4] + ' ' + str(h_ice) + ' мм' '.png')
     plt.draw()
 
 # добавить ,kernel_A если возвращать работу разрушения на 4 позицию здесь
@@ -279,8 +288,7 @@ def interact_point(graph_axes,kernel,kernel_1,kernel_A_end,kernel_Fmax,kernel_L)
     graph_axes.plot(data[:,1],data[:,0])
     graph_axes.scatter(data[kernel,1],data[kernel,0],color='orange', s=30, marker='o') #Точка по которой строили прямую и считали D и E
     graph_axes.scatter(data[kernel_1,1],data[kernel_1,0],color='orange', s=30, marker='o') #Вторая точка прямой упругой зоны
-   # graph_axes.scatter(data[kernel_A,1],data[kernel_A,0],color='orange', s=30, marker='o') #Точка по которой считали работу разрушения
-   # graph_axes.plot((data[kernel_A,1],data[kernel_A,1]),(data[kernel_A,0],0), linestyle = '--', linewidth=1, color = 'darkmagenta')
+
     graph_axes.scatter(data[kernel_Fmax,1],data[kernel_Fmax,0],color='red', s=30, marker='o') #Точка по которой считали работу по максимальной силе
     graph_axes.plot((data[kernel_Fmax,1],data[kernel_Fmax,1]),(data[kernel_Fmax,0],0), linestyle = '--', linewidth=1, color = 'darkmagenta')
     graph_axes.plot([kernel_A_end,data[kernel_L,1]],[0,data[kernel_L,0]], linestyle = '--', linewidth=1, color = 'darkmagenta') #Строим прямую упругой части графика
@@ -296,9 +304,7 @@ def onButtonClicked(event):
     graph_axes.grid()
     #Если возвращать работу разрушения - добавить сюда 4 переменной ,kernel_A_S.val здесь
     addPlot(graph_axes,kernel_S.val,kernel_1_S.val,kernel_A_end.val,kernel_Fmax.val,kernel_L.val) 
-    A = np.array([[0,0],[0,0]])
-    A = np.vstack((A,data))
-    np.savetxt(filename[0:-4]+'_new.txt',A)#сохранение файла в то же место но с новым именем для будущих нужд
+
     
 def Change_slider(value):
      #Если возвращать работу разрушения - добавить сюда 4 переменной ,kernel_A_S.val здесь
@@ -320,15 +326,13 @@ def sliders():
     kernel_S.valtext.set_visible(False)
     kernel_1_S=(Slider(ax_kernel_1,'Нижняя точка упр.зоны',1,int(len(data[:,0]-100)/3),valinit=502,valfmt='%10.0f'))
     kernel_1_S.valtext.set_visible(False)
-    #kernel_A_S=(Slider(ax_kernel_A,'Работа разрушения',1,int(len(data[:,0]-100)),valinit=int(len(data[:,0])-5000),valfmt='%10.0f'))
-    #kernel_A_S.valtext.set_visible(False)
     kernel_A_end=(Slider(ax_kernel_end,'Полная работа',float(x_val[0]),float(x_val[-1]),valinit=float(data[-1,1]),valfmt='%0.01f'))
     kernel_A_end.valtext.set_visible(False)
     kernel_Fmax=(Slider(ax_kernel_F,'Максимальная сила',1,int(len(data[:,0]-100)),valinit=int(F_max),valfmt='%10.0f'))
     kernel_Fmax.valtext.set_visible(False)
     kernel_L=(Slider(ax_kernel_L,'Закрит. часть',int(F_max),int(len(data[:,0])),valinit=int(len(data[:,0])-1),valfmt='%10.0f'))
     kernel_L.valtext.set_visible(False)
-    #h_ice_S=(Slider(ax_h,'Толщина проморозки',0,55,valinit=SET_VAL,valfmt='%0.01f',color='red'))
+
 def h_of_ice():
     global h_ice
     print("Введите толщину льда")
@@ -390,13 +394,13 @@ fig.subplots_adjust(left=0.08,right=0.95, top= 0.97, bottom=0.3)
 # Создание переключателя для типа гранул
 sliders()# Вызов слайдеров
 axes_radiobuttons = plt.axes([-0.02, 0.6, 0.11, 0.11], frameon=False, aspect='equal' )# координаты left bottom width height
-radiobuttons= RadioButtons(axes_radiobuttons,['20 мм', '10 мм', '3 мм', 'Натурный лёд'], activecolor='black',active = 2)
+radiobuttons= RadioButtons(axes_radiobuttons,['20 мм', '10 мм', '3 мм', 'Конусы', 'Натурный лёд'], activecolor='black',active = 3)
 radiobuttons.on_clicked(onRadioButtonsClicked)
 onRadioButtonsClicked(radiobuttons.value_selected)# вызов функции события при нажатии на кнопку
 
 # создание переключателя для количества слоев гранул
 axes_radiobuttons_lay = plt.axes([-0.02, 0.5, 0.11, 0.11], frameon=False, aspect='equal' )# координаты left bottom width height
-radiobuttons_lay= RadioButtons(axes_radiobuttons_lay,['1 слой', '2 слоя', '3 слоя'], activecolor='black',active = 1)
+radiobuttons_lay= RadioButtons(axes_radiobuttons_lay,['1 слой', '2 слоя', '3 слоя'], activecolor='black',active = 0)
 radiobuttons_lay.on_clicked(onRadioButtonsClickedLayer)
 onRadioButtonsClickedLayer(radiobuttons_lay.value_selected)# вызов функции события при нажатии на кнопку
 
@@ -416,6 +420,7 @@ radiobuttons_k= RadioButtons(axes_radiobuttons_k,['Канал', 'Пролом'],
 radiobuttons_k.on_clicked(onRadioButtonsClicked_k)
 onRadioButtonsClicked_k(radiobuttons_k.value_selected)
 
+plt.rcParams.update({'font.size': 19})
 # Создание кнопки "Пересчет"
 axes_button_add=plt.axes([0.1,0.02,0.1,0.04])# координаты left bottom width height
 button_add=Button(axes_button_add,'Пересчёт')

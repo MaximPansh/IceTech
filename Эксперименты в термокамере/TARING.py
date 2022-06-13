@@ -32,7 +32,7 @@ def onRadioButtonsClicked(label):
     Обработчик события при клике по типу датчика
     """
     global F_k
-    dic_F_k = {'2 кг' : -95.824,'3 кг': -107.3, '5 кг': -259.47, '10 кг':  -378.42, '20 кг': -356.59}
+    dic_F_k = {'1 кг' : -41.274,'3 кг': -107.3, '5 кг': 87.85, '10 кг':  -378.42, '20 кг': -356.59}
     return dic_F_k[label]
 
 def tar_F(V, null_point=0, k = 1):
@@ -50,6 +50,12 @@ def tar_F(V, null_point=0, k = 1):
     10кг=-172,41
     10 кг 24.06.2021: -378.42
     улица -571.2
+    
+    к опытам по конусам тарировка от 06.2022:
+        1 кг: -41.274
+        3 кг: -107.3
+        5 кг(большой): 87.85
+        
     """
     k = onRadioButtonsClicked(radiobuttons.value_selected)
     b=-k*V[null_point]
@@ -58,7 +64,7 @@ def tar_F(V, null_point=0, k = 1):
     return np.array(k*V+b)#тарировочное уравнение
            
 
-def tar_w(V, k=-7.0406, null_point=0):
+def tar_w(V, k=-3.3455, null_point=0):
     """
     Преобразование показаний датчика перемещений (Вольты в миллиметры)
     Тарировочное уравнение вида w(V)=kV+b
@@ -66,6 +72,8 @@ def tar_w(V, k=-7.0406, null_point=0):
     Возвращает w(массив)
     старый датчик -2.646 
     новый зелёный датчик -6,8581
+    До конусов:-7.0406 (тоже зеленый)
+    конусы: 3.3455
     улица -15.4992
     """
     b=-k*V[null_point]  
@@ -284,7 +292,7 @@ def add_figets():
     global radiobuttons
     
     for i in data_file.split('/')[-2].split(' ')[-1]:
-        if i == '2':
+        if i == '1':
             act_sensor = 0
             break
         elif i == '3':
@@ -293,14 +301,11 @@ def add_figets():
         elif i == '5':
             act_sensor = 2
             break
-        elif i == '1':
-            act_sensor = 3
-            break
         else:
             act_sensor = 4
 
     axes_radiobuttons = plt.axes([-0.02, 0.4, 0.11, 0.11], frameon=False, aspect='equal')# координаты left bottom width height
-    radiobuttons= RadioButtons(axes_radiobuttons,['2 кг', '3 кг', '5 кг', '10 кг','20 кг'], activecolor='black', active = act_sensor)
+    radiobuttons= RadioButtons(axes_radiobuttons,['1 кг', '3 кг', '5 кг', '10 кг','20 кг'], activecolor='black', active = act_sensor)
     onRadioButtonsClicked(radiobuttons.value_selected)
     radiobuttons.on_clicked(onRadioButtonsClicked)
     #Создание слайдеров

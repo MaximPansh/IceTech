@@ -7,186 +7,34 @@ Created on Mon May  9 13:46:19 2022
 import numpy as np
 from matplotlib import pyplot as plt
 import matplotlib.ticker as mtick
+import Ice_methods as ice
+                    # tgФ1  tgФ2   jлтф   jсф
+Geom_16 = np.array([0.530, 0.494, 3.328, 1.197,# 0 1 2 3
+                    #Флт   Фс     Фп     Фпт
+                    5.323, 1.677, 0.085, 0.726,# 4 5 6 7
+                    #Фи    Фит    Фик     Фитк
+                    0.079, 0.255, 0.247, 0.317,# 8 9 10 11
+                    #Фг    Фгт    Ф'пн   Ф'пнт
+                    0.008, 0.028, 0.430, 1.734,# 12 13 14 15
+                    #Ф'пк  Ф'птк   Ф'гн   Ф'гтн
+                    0.157, 0.780, 0.062, 0.199,# 16 17 18 19
+                    #Ф'гк   Фгтк
+                    0.302, 0.290])             # 20 21
 
+                    # tgФ1  tgФ2   jлтф   jсф
+Geom_tan = np.array([0.706, 4.704, 2.138, 0.722,# 0 1 2 3
+                    #Флт   Фс     Фп     Фпт
+                    5.336, 3.781, 0.004, 0.027,# 4 5 6 7
+                    #Фи    Фит    Фик     Фитк
+                    0.232, 0.405, 0.067, 0.234,# 8 9 10 11
+                    #Фг    Фгт    Ф'пн   Ф'пнт
+                    0.001, 0.002, 0.644, 1.080,# 12 13 14 15
+                    #Ф'пк  Ф'птк   Ф'гн   Ф'гтн
+                    0.358, 1.504, 0.273, 0.452,# 16 17 18 19
+                    #Ф'гк   Фгтк
+                    0.035, 0.128])             # 20 21
 
-Geom = np.array([0.466, 0.477, 3.46, 0.96,
-                          5.28, 1.52, 0.072, 0.744,
-                          0.068, 0.241, 0.006, 0.023])
-
-
-def R_1 (h, B, v, Geom, g = 9.81, f = 0.15, po_l = 0.92, po = 1, Ci = None):
-    """
-    Функция расчета импульсного сопротивления судна при движении в битых льдах.
-    При вводе параметров в виде массивов данных, необходимо размеры входных массивов 
-    привести к одному порядку.
-    Parameters
-    ----------
-    h : TYPE - NP.Array, INT, FLOAT
-        DESCRIPTION.Толщина ледяного покрова, м
-                
-    B : TYPE -  INT, FLOAT
-        DESCRIPTION. Ширина судна, м
-                
-    v : TYPE - NP.Array, INT, FLOAT
-        DESCRIPTION. Скорость движения судна, м\с
-        
-    Geom : TYPE - NP.Array
-        DESCRIPTION.Одномерный массив геометрических характеристик корпуса судна
-                
-    g : TYPE, optional FLOAT
-        DESCRIPTION. Ускорение свободного падения м\с2 Стандартное значение 9.81.
-        
-    f : TYPE, optional FLOAT
-        DESCRIPTION. Коэффициент трения льда о корпус судна. Стандартное значение 0.24.
-        
-    po_l : TYPE, optional FLOAT
-        DESCRIPTION. Плотность ледяного покрова т\м3. Стандартное значение 0.92.
-        
-    po : TYPE, optional FLOAT
-        DESCRIPTION. Плотность воды т\м3. Стандартное значение 1.
-        
-    Ci : TYPE, optional FLOAT, INT
-        DESCRIPTION.Коэффициент учитывающий присоединенные массы воды.
-        Стандартное значение None, при не изменении стандартного значения 
-        расчитывается по формуле внутри функции
-
-    Returns
-    -------
-    TYPE FLOAT, NP.ARRAY
-        DESCRIPTION. Функция возращает число равное импульсному сопротивлению судна кН.
-        При вводе в функцию  одномерного массива с размером N возравщается массив размера N
-
-    """
-    if Ci == None:
-        puas = 0.35 # коэффициент Пуассона
-        E = 5.8 * 10**6 #модуль упругости пресного льда
-        D = E * h**3 / (12 * (1 - puas**2))
-        alf = (po * g / D)**0.25
-        b = 0.312 / alf
-        Ci = 1 + (0.218 * b / h) * (po / po_l)
-    return Ci * po_l * h * (B/2) * (v**2) * (Geom[8] + f * Geom[9])
-    
-
-def R_2 ( h, B, v, Geom, f = 0.15, po = 1, Cg = 2):
-    """
-    Функция расчитывающие сопротивление судна обусловленное рассеиванием энергии движущегося
-    состающее из двух слагаемых: диссипативной составляющиией вследствии сопротивления воды
-    раздвиганию льдин и диссипативной составляющией обусловленной трением льдин друг об друга.
-    При вводе параметров в виде массивов данных, необходимо размеры входных массивов 
-    привести к одному порядку.
-
-    Parameters
-   h : TYPE - NP.Array, INT, FLOAT
-        DESCRIPTION.Толщина ледяного покрова, м
-                
-    B : TYPE -  INT, FLOAT
-        DESCRIPTION. Ширина судна, м
-                
-    v : TYPE - NP.Array, INT, FLOAT
-        DESCRIPTION. Скорость движения судна, м\с
-     Geom : TYPE - NP.Array
-        DESCRIPTION.Одномерный массив геометрических характеристик корпуса судна
-    f : TYPE, optional FLOAT
-        DESCRIPTION. Коэффициент трения льда о корпус судна. Стандартное значение 0.24.
-
-    po : TYPE, optional FLOAT
-        DESCRIPTION. Плотность воды т\м3. Стандартное значение 1.
-        
-    Cg : TYPE, optional FLOAT, INT
-        DESCRIPTION.Коэффициент учитывающий гидродинамическое сопротивление 
-        при раздвигании льдин.
-        Стандартное значение 2
-   Returns
-    -------
-    TYPE FLOAT, NP.ARRAY
-        DESCRIPTION. Функция возращает число или массив числе равное сопротивлению
-        воды раздвиганию льдин и трения льдин друг об друга , кН.
-        При вводе в функцию  одномерного массива с размером N возравщается массив размера N
-
-
-    """
-    return Cg * po * (v**2) * h * (B/2) * (Geom[10] + f * Geom[11])
-
-
-def R_3 (h, B, Geom, g = 9.81, f = 0.15, po_l = 0.92, po = 1):
-    """
-    Функция расчета сопротивления судна обсуловленного притаплиыванием
-    и поворачиванием льдин.    
-    При вводе параметров в виде массивов данных, необходимо размеры входных массивов 
-    привести к одному порядку.
-
-    Parameters
-    ----------
-     h : TYPE - NP.Array, INT, FLOAT
-        DESCRIPTION.Толщина ледяного покрова, м
-                
-    B : TYPE -  INT, FLOAT
-        DESCRIPTION. Ширина судна, м
-     Geom : TYPE - NP.Array
-        DESCRIPTION.Одномерный массив геометрических характеристик корпуса судна
-                
-    g : TYPE, optional FLOAT
-        DESCRIPTION. Ускорение свободного падения м\с2 Стандартное значение 9.81.
-        
-    f : TYPE, optional FLOAT
-        DESCRIPTION. Коэффициент трения льда о корпус судна. Стандартное значение 0.24.
-        
-    po_l : TYPE, optional FLOAT
-        DESCRIPTION. Плотность ледяного покрова т\м3. Стандартное значение 0.92.
-        
-    po : TYPE, optional FLOAT
-        DESCRIPTION. Плотность воды т\м3. Стандартное значение 1.
-        
-
-    Returns
-    -------
-    TYPE FLOAT, NP.ARRAY
-        DESCRIPTION. Возрвращает число или массив чисел от притапливания и 
-        поворачивания льдин, кН
-        При вводе в функцию  одномерного массива с размером N возравщается массив размера N
-        
-
-    """
-    
-    puas = 0.35 # коэффициент Пуассона
-    E = 5.8 * 10**6 #Модуль упругости пресного льда
-    D = E * h**3 / (12 * (1 - puas**2)) #Цилиндрическая жесткость
-    alf = (po * g / D)**0.25 #Коэффициент упругого основания пластины
-    b = 0.312 / alf # ширина льдины
-    return (po_l + po) * g * h * b * B * (Geom[6] + f * Geom[7])
-
-
-def R_Zuev(h, B, v, po_l = 0.92, g = 9.82, S = 0.9):
-    """
-    
-
-    Parameters
-    ----------
-    h : TYPE
-        DESCRIPTION.
-    B : TYPE
-        DESCRIPTION.
-    po_l : TYPE, optional
-        DESCRIPTION. The default is 0.92.
-    g : TYPE, optional
-        DESCRIPTION. The default is 9.82.
-    S : TYPE, optional
-        DESCRIPTION. The default is 10.
-
-    Returns
-    -------
-    None.
-
-    """
-    Fr_h = v/(g * h)**0.5
-
-    return (po_l * g * B * h**2) * ((0.13 * B / h) + (1.3 * Fr_h) + (0.5*Fr_h**2)) * (2 - S) * S**2
-
-
-def Thrust_line (P_w, v, v0, a2 = 0.6):
-    a1 = 1 - a2
-    return (P_w * (1 - a1 * (v/v0) -  a2 * (v/v0)**2))
-    
+Geom = Geom_tan
 P_w = 140
 v0 = 6.11   
 v = np.arange(0, 7, 1)
@@ -200,11 +48,12 @@ for i in h:
        col[0] += 0.1
        col[1] -= 0.1
        col[2] -= 0.1
-       ax.plot(v, R_1(i, B, v, Geom) + R_2(i, B, v, Geom) + R_3(i, B, Geom), label = "Толщина льда " + str(round(i,2)) + " м", color = tuple(col))
-       ax.plot(v, R_Zuev(i, B, v), linestyle = 'dashed', color = tuple(col), linewidth = 2)
+
+       ax.plot(v, ice.R_1(i, B, v, Geom) + ice.R_2(i, B, v, Geom) + ice.R_3(i, B, Geom), label = "Толщина льда " + str(round(i,2)) + " м", color = tuple(col))
+       ax.plot(v, ice.R_Zuev(i, B, v), linestyle = 'dashed', color = tuple(col), linewidth = 2)
        
                             
-ax.plot(v, Thrust_line(P_w, v, v0), color = 'black')      
+ax.plot(v, ice.Thrust_line(P_w, v, v0), color = 'black')      
 ax.set_xlabel('Скорость, м/c')
 ax.set_ylabel('Сопротвление\nТяга, кН')
 ax.set_xlim(0, 6)
